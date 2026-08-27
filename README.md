@@ -1,5 +1,4 @@
 <div align="center">
-
 # 🍊 Oorty by Sednium
 
 ### *Multi-Model AI Chat, Local GGUF Inference & Autonomous Agentic Workspace*
