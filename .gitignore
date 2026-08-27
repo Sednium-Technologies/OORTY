@@ -4,49 +4,52 @@ node_modules/
 # Build output
 dist/
 build/
+app/build/
+app/app/build/
+/build
+/captures
 
 # Environment variables
 .env
 .env.local
 .env.*.local
+local.properties
+/local.properties
+app/local.properties
 
-# IDE
+# IDE & OS
+*.iml
 .vscode/
 .idea/
-
-# OS files
+/.idea/
+.kotlin
+.externalNativeBuild
+.cxx
 .DS_Store
 Thumbs.db
 desktop.ini
+debug.keystore
 
-# Logs
+# Logs & Cache
 *.log
 npm-debug.log*
-
-# Cache
 .cache/
 .parcel-cache/
 
-# LiteLLM proxy (not part of the landing page)
-run-proxy.ps1
-config.yaml
-
-# Project spec (internal, not for public)
-Oorty.md
-
-# Claude Code
-.claude/
-.agents/
-
-# Android Build
+# Gradle
 .gradle/
 app/.gradle/
 app/app/.gradle/
-app/build/
-app/app/build/
-local.properties
-app/local.properties
+
+# Binaries & Archives
 *.apk
 *.aab
 mods.zip
 mods/
+
+# Internal Specs
+Oorty.md
+config.yaml
+run-proxy.ps1
+.claude/
+.agents/
