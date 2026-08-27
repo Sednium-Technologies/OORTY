@@ -38,6 +38,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -62,7 +68,7 @@ import oorty.sednium.app.ui.theme.ThinkingDots
  * messages: left-aligned with a sedRed/sedYellow bot avatar.
  * User messages: right-aligned pill, sedRed/5 fill + sedRed/30 border.
  */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun ChatBubble(
     msg: ChatMessage,
@@ -100,7 +106,7 @@ fun ChatBubble(
                         painter = painterResource(id = oorty.sednium.app.R.drawable.logo),
                         contentDescription = "Oorty Logo",
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        contentScale = ContentScale.Crop
                     )
                 }
             }
@@ -113,7 +119,16 @@ fun ChatBubble(
                         .border(1.dp, OrangeAlpha.a30, RoundedCornerShape(16.dp))
                         .padding(horizontal = 16.dp, vertical = 10.dp)
                 } else {
-                    Modifier.padding(vertical = 2.dp)
+                    Modifier
+                        .combinedClickable(
+                            onClick = {},
+                            onLongClick = {
+                                if (msg.thought != null && msg.thought.isNotBlank()) {
+                                    userThoughtExpanded = !userThoughtExpanded
+                                }
+                            }
+                        )
+                        .padding(vertical = 2.dp)
                 }
             ) {
                 if (isModel) {
@@ -123,12 +138,16 @@ fun ChatBubble(
                             style = MaterialTheme.typography.labelSmall,
                             color = SedniumColors.Gray500
                         )
-                        if (showPerformanceStats && !isGenerating && (msg.latencyMs != null || msg.tokensPerSecond != null)) {
+                        if (showPerformanceStats && !isGenerating && (msg.latencyMs != null || msg.tokensPerSecond != null || msg.thoughtDurationMs != null)) {
                             val statsText = buildString {
                                 append("· ")
                                 msg.latencyMs?.let { append(String.format("%.1fs", it / 1000.0)) }
-                                if (msg.latencyMs != null && msg.tokensPerSecond != null) append(" · ")
-                                msg.tokensPerSecond?.let { append("~${it.toInt()} tok/s") }
+                                if (msg.thoughtDurationMs != null && msg.thoughtDurationMs > 0) {
+                                    append(" · 🧠 Thought for ${String.format("%.1fs", msg.thoughtDurationMs / 1000.0)}")
+                                }
+                                if (msg.tokensPerSecond != null && msg.tokensPerSecond > 0) {
+                                    append(" · ~${msg.tokensPerSecond.toInt()} tok/s")
+                                }
                             }
                             Text(
                                 statsText,
@@ -150,23 +169,75 @@ fun ChatBubble(
                             }
                         }
                     }
+                }
 
-                    // --- Citations Carousel (Research) ---
-                    if (msg.citations.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier
-                                .horizontalScroll(rememberScrollState())
-                                .padding(top = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            msg.citations.forEach { cit ->
+                // --- Attachments / Media Preview ---
+                if (msg.attachments.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        msg.attachments.forEach { att ->
+                            when (att.type) {
+                                AttachmentType.IMAGE -> {
+                                    val uri = remember(att.data) { Uri.parse(att.data) }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(width = 180.dp, height = 120.dp)
+                                            .clip(RoundedCornerShape(SedniumRadii.md))
+                                            .background(if (isDark) SedniumColors.Gray800 else SedniumColors.Gray200)
+                                            .clickable { onImageClick(att.data) }
+                                    ) {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(LocalContext.current)
+                                                .data(uri)
+                                                .crossfade(true)
+                                                .build(),
+                                            contentDescription = att.name ?: "Attachment",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                }
+                                else -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(SedniumRadii.sm))
+                                            .background(if (isDark) SedniumColors.Gray800 else SedniumColors.Gray200)
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text("📎", style = MaterialTheme.typography.labelSmall)
+                                        Text(att.name ?: "File", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // --- Citations / Search Sources (Perplexity Style) ---
+                if (msg.citations.isNotEmpty()) {
+                    FlowRow(
+                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        msg.citations.forEach { cit ->
+                            val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(SedniumRadii.sm))
+                                    .background(SedniumColors.Orange.copy(alpha = 0.1f))
+                                    .border(1.dp, SedniumColors.Orange.copy(alpha = 0.3f), RoundedCornerShape(SedniumRadii.sm))
+                                    .clickable {
+                                        try { uriHandler.openUri(cit.url) } catch (e: Exception) {}
+                                    }
+                            ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(if (isDark) SedniumColors.DarkSurfaceAlt else SedniumColors.Gray100)
-                                        .border(1.dp, if (isDark) SedniumColors.Gray700 else SedniumColors.Gray200, RoundedCornerShape(16.dp))
-                                        .clickable { /* open cit.url */ }
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
                                     Text("[${cit.id}]", style = MaterialTheme.typography.labelSmall, color = SedniumColors.Orange, fontWeight = FontWeight.Bold)
@@ -179,36 +250,38 @@ fun ChatBubble(
                 }
 
                 // --- Thought / reasoning trace (collapsible <details>) ---
-                if (msg.thought != null) {
-                    val showThinking = msg.isThinking
+                if (msg.thought != null && msg.thought.isNotBlank()) {
                     val thinkingStateText = when {
-                        msg.isThinking -> "Thinking…"
-                        isGenerating -> "Generating final output…"
-                        else -> "Thought Process"
+                        msg.isThinking || (isGenerating && msg.content.isBlank()) -> "Thinking…"
+                        thoughtExpanded -> "Hide Reasoning"
+                        msg.thoughtDurationMs != null && msg.thoughtDurationMs > 0 -> "🧠 Thought for ${String.format("%.1fs", msg.thoughtDurationMs / 1000.0)} (tap to view)"
+                        else -> "🧠 Show Reasoning (tap or hold)"
                     }
                     
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier
-                            .padding(top = 8.dp)
+                            .padding(top = 6.dp, bottom = 4.dp)
                             .clip(RoundedCornerShape(SedniumRadii.sm))
+                            .background(if (isDark) SedniumColors.Gray800 else SedniumColors.Gray100)
                             .clickable { userThoughtExpanded = !thoughtExpanded }
-                            .padding(4.dp)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Icon(
                             imageVector = if (thoughtExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
                             contentDescription = null,
-                            tint = SedniumColors.Orange.copy(alpha = 0.5f),
+                            tint = SedniumColors.Orange,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = thinkingStateText,
                             style = MaterialTheme.typography.labelSmall,
-                            color = SedniumColors.Orange.copy(alpha = 0.5f)
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDark) SedniumColors.Gray300 else SedniumColors.Gray800
                         )
-                        if (msg.isThinking || isGenerating) {
-                            ThinkingDots(dotColor = SedniumColors.Orange.copy(alpha = 0.5f))
+                        if (msg.isThinking || (isGenerating && msg.content.isBlank())) {
+                            ThinkingDots(dotColor = SedniumColors.Orange)
                         }
                     }
                     AnimatedVisibility(
@@ -218,9 +291,12 @@ fun ChatBubble(
                     ) {
                         Box(
                             modifier = Modifier
-                                .padding(start = 12.dp, top = 4.dp)
-                                .border(0.dp, SedniumColors.Gray200) // left rule emulated via padding card
-                                .padding(start = 8.dp)
+                                .fillMaxWidth()
+                                .padding(top = 4.dp, bottom = 8.dp)
+                                .clip(RoundedCornerShape(SedniumRadii.sm))
+                                .background(if (isDark) SedniumColors.Gray900 else SedniumColors.Milk)
+                                .border(1.dp, if (isDark) SedniumColors.Gray700 else SedniumColors.Gray200, RoundedCornerShape(SedniumRadii.sm))
+                                .padding(12.dp)
                         ) {
                             oorty.sednium.app.markdown.MarkdownView(content = msg.thought, isDark = isDark)
                         }

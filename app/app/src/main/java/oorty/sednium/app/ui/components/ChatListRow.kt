@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,14 +32,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import oorty.sednium.app.model.ChatSession
+import oorty.sednium.app.ui.theme.LocalSedniumIsDark
 import oorty.sednium.app.ui.theme.OrangeAlpha
 import oorty.sednium.app.ui.theme.SedniumColors
 import oorty.sednium.app.ui.theme.SedniumRadii
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-import androidx.compose.material.icons.outlined.*
 
 /** Port of one row inside ChatListDrawer.tsx — selectable, pinnable, renamable, deletable. */
 @Composable
@@ -52,6 +52,8 @@ fun ChatListRow(
     onRename: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val isDark = LocalSedniumIsDark.current
+    val accentColor = if (isDark) SedniumColors.DarkOrange else SedniumColors.Orange
     val dateFmt = remember(chat.updatedAt) {
         SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(chat.updatedAt))
     }
@@ -62,10 +64,13 @@ fun ChatListRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(SedniumRadii.md))
-            .background(if (isCurrent && !isSelectionMode) OrangeAlpha.a10 else Color.Transparent)
+            .background(
+                if (isCurrent && !isSelectionMode) (if (isDark) SedniumColors.Gray800 else OrangeAlpha.a10)
+                else Color.Transparent
+            )
             .border(
                 1.dp,
-                if (isCurrent && !isSelectionMode) OrangeAlpha.a20 else Color.Transparent,
+                if (isCurrent && !isSelectionMode) (if (isDark) SedniumColors.Gray700 else OrangeAlpha.a20) else Color.Transparent,
                 RoundedCornerShape(SedniumRadii.md)
             )
             .clickable(onClick = onClick)
@@ -75,25 +80,25 @@ fun ChatListRow(
             Icon(
                 if (isChecked) Icons.Filled.CheckBox else Icons.Filled.CheckBoxOutlineBlank,
                 contentDescription = null,
-                tint = if (isChecked) SedniumColors.Orange else OrangeAlpha.a50
+                tint = if (isChecked) accentColor else (if (isDark) SedniumColors.Gray500 else OrangeAlpha.a50)
             )
         }
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (chat.isPinned) {
-                    Icon(Icons.Filled.PushPin, contentDescription = "Pinned", tint = OrangeAlpha.a60, modifier = Modifier.padding(end = 2.dp))
+                    Icon(Icons.Filled.PushPin, contentDescription = "Pinned", tint = accentColor, modifier = Modifier.padding(end = 2.dp))
                 }
                 Text(
                     chat.title.ifBlank { "New Chat" },
                     fontWeight = FontWeight.Bold,
-                    color = SedniumColors.Orange,
+                    color = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
-            Text(dateFmt, style = MaterialTheme.typography.labelSmall, color = OrangeAlpha.a50)
+            Text(dateFmt, style = MaterialTheme.typography.labelSmall, color = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a50)
         }
 
         if (!isSelectionMode) {
@@ -101,14 +106,14 @@ fun ChatListRow(
                 Icon(
                     if (chat.isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin, 
                     contentDescription = if (chat.isPinned) "Unpin" else "Pin", 
-                    tint = OrangeAlpha.a60
+                    tint = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a60
                 )
             }
             IconButton(onClick = onRename) {
-                Icon(Icons.Filled.Edit, contentDescription = "Rename", tint = OrangeAlpha.a60)
+                Icon(Icons.Filled.Edit, contentDescription = "Rename", tint = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a60)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = OrangeAlpha.a60)
+                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = SedniumColors.Red500.copy(alpha = 0.8f))
             }
         }
     }

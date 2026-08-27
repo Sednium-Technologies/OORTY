@@ -5,15 +5,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
-
-/**
- * The original app actually pins `isDark = false` and forces the light
- * "sedYellow / sedRed" palette everywhere (see App.tsx:359), keeping the
- * `.dark` CSS rules only as a latent secondary theme. We mirror that
- * intent: SedniumTheme defaults to Light, but a fully working Dark
- * ColorScheme is provided for parity / future use.
- */
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val SedniumLightColors = lightColorScheme(
     primary = SedniumColors.Orange,
@@ -33,11 +29,11 @@ private val SedniumLightColors = lightColorScheme(
 )
 
 private val SedniumDarkColors = darkColorScheme(
-    primary = SedniumColors.Orange,
+    primary = SedniumColors.DarkOrange,
     onPrimary = SedniumColors.Milk,
-    background = SedniumColors.DarkBackground,
+    background = Color(0xFF1E1E1E),
     onBackground = SedniumColors.Gray100,
-    surface = SedniumColors.DarkSurfaceAlt,
+    surface = Color(0xFF282828),
     onSurface = SedniumColors.Gray100,
     surfaceVariant = SedniumColors.Gray800,
     onSurfaceVariant = SedniumColors.Gray300,
@@ -54,17 +50,33 @@ val LocalSedniumIsDark = staticCompositionLocalOf { false }
 
 @Composable
 fun SedniumTheme(
-    darkTheme: Boolean = false, // app forces light by default, matching App.tsx
+    darkTheme: Boolean = false,
+    useSerif: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colors = if (darkTheme) SedniumDarkColors else SedniumLightColors
+    val typography = getSedniumTypography(useSerif = useSerif)
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
+            val statusBarColor = if (darkTheme) android.graphics.Color.parseColor("#1E1E1E") else android.graphics.Color.parseColor("#FDFBF7")
+            window.statusBarColor = statusBarColor
+            window.navigationBarColor = statusBarColor
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
+        }
+    }
 
     androidx.compose.runtime.CompositionLocalProvider(LocalSedniumIsDark provides darkTheme) {
         MaterialTheme(
             colorScheme = colors,
-            typography = SedniumTypography,
+            typography = typography,
             shapes = SedniumShapes,
             content = content
         )
     }
 }
+

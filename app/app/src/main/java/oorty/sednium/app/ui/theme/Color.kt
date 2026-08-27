@@ -17,9 +17,9 @@ import androidx.compose.ui.graphics.Color
  */
 object SedniumColors {
 
-    // ---- Brand tokens (identical in both themes) ----
     val Milk = Color(0xFFFDFBF7)   // primary light background / "paper"
     val Orange    = Color(0xFFEC5E27)   // primary accent / ink / CTA
+    val DarkOrange = Color(0xFFDF6B35)  // comfortable, non-aggressive softer orange for dark mode
 
     val SedYellow = Milk
     val SedRed = Orange

@@ -177,7 +177,7 @@ class MainActivity : FragmentActivity() {
 
             val isDark = settings.theme == oorty.sednium.app.model.AppTheme.DARK
             androidx.compose.animation.Crossfade(targetState = isDark, label = "ThemeCrossfade") { darkTheme ->
-                SedniumTheme(darkTheme = darkTheme) {
+                SedniumTheme(darkTheme = darkTheme, useSerif = settings.useSerifFont) {
                     Surface(modifier = Modifier.fillMaxSize()) {
 
                     if (showPromptLab) {
@@ -327,105 +327,136 @@ class MainActivity : FragmentActivity() {
 
                             isLoading = true
                             scope.launch {
-                                val startTime = System.currentTimeMillis()
-                                var firstTokenTime: Long? = null
-                                try {
-                                     val apiKey = oorty.sednium.app.ui.screens.apiKeyFor(settings)
-                                     if (apiKey.isBlank() && settings.provider != oorty.sednium.app.model.ModelProvider.LOCAL && settings.provider != oorty.sednium.app.model.ModelProvider.LOCAL_GGUF && settings.provider != oorty.sednium.app.model.ModelProvider.NONE) throw Exception("API Key is missing.")
-                                    val effectiveSystemInstruction = chat.systemInstructionOverride ?: settings.currentSystemInstruction
-                                    val effectiveTemp = chat.temperatureOverride ?: settings.temperature
-                                    val effectiveTopP = chat.topPOverride ?: settings.topP
-                                    val effectiveTopK = chat.topKOverride ?: settings.topK
-                                    val effectiveMaxTokens = chat.maxTokensOverride ?: settings.maxTokens
-                                    val resolvedBaseUrl = oorty.sednium.app.model.PROVIDER_CONFIG[settings.provider]?.defaultUrl ?: ""
+                                 val startTime = System.currentTimeMillis()
+                                 var firstTokenTime: Long? = null
+                                 var firstThoughtTokenTime: Long? = null
+                                 var lastThoughtTokenTime: Long? = null
+                                 var firstTextTokenTime: Long? = null
+                                 try {
+                                      val apiKey = oorty.sednium.app.ui.screens.apiKeyFor(settings)
+                                      if (apiKey.isBlank() && settings.provider != oorty.sednium.app.model.ModelProvider.LOCAL && settings.provider != oorty.sednium.app.model.ModelProvider.LOCAL_GGUF && settings.provider != oorty.sednium.app.model.ModelProvider.NONE) throw Exception("API Key is missing.")
+                                     val effectiveSystemInstruction = chat.systemInstructionOverride ?: settings.currentSystemInstruction
+                                     val effectiveTemp = chat.temperatureOverride ?: settings.temperature
+                                     val effectiveTopP = chat.topPOverride ?: settings.topP
+                                     val effectiveTopK = chat.topKOverride ?: settings.topK
+                                     val effectiveMaxTokens = chat.maxTokensOverride ?: settings.maxTokens
+                                     val resolvedBaseUrl = oorty.sednium.app.model.PROVIDER_CONFIG[settings.provider]?.defaultUrl ?: ""
 
-                                    val vaultContext = storage.vaultIndexer.getRelevantContext(lastUserMsg.content)
-                                    val combinedSystemInstruction = if (vaultContext.isNotBlank()) "$effectiveSystemInstruction\n$vaultContext" else effectiveSystemInstruction
+                                     val vaultContext = storage.vaultIndexer.getRelevantContext(lastUserMsg.content)
+                                     val combinedSystemInstruction = if (vaultContext.isNotBlank()) "$effectiveSystemInstruction\n$vaultContext" else effectiveSystemInstruction
 
-                                    if (settings.enableTools && mcpServerManager.availableTools.isNotEmpty()) {
-                                        val finalText = runAgenticTurn(
-                                            mcpServerManager = mcpServerManager,
-                                            provider = settings.provider,
-                                            apiKey = apiKey,
-                                            modelName = settings.model,
-                                            baseUrl = resolvedBaseUrl,
-                                            systemInstruction = combinedSystemInstruction,
-                                            temperature = effectiveTemp,
-                                            topP = effectiveTopP,
-                                            topK = effectiveTopK,
-                                            maxTokens = effectiveMaxTokens,
-                                            userMessage = lastUserMsg.content,
-                                            priorHistory = historyWithoutLastUser,
-                                            context = this@MainActivity,
-                                            vaultIndexer = storage.vaultIndexer,
-                                            onToolCallsUpdated = { states ->
-                                                chats = chats.map { chat ->
-                                                    if (chat.id == currentChatId) {
-                                                        chat.copy(messages = chat.messages.map { msg ->
-                                                            if (msg.id == modelMsgId) msg.copy(toolCalls = states) else msg
-                                                        })
-                                                    } else chat
-                                                }
-                                            }
-                                        )
-                                        firstTokenTime = System.currentTimeMillis()
-                                        chats = chats.map { chat ->
-                                            if (chat.id == currentChatId) {
-                                                chat.copy(
-                                                    messages = chat.messages.map { msg ->
-                                                        if (msg.id == modelMsgId) msg.copy(content = finalText) else msg
-                                                    },
-                                                    updatedAt = System.currentTimeMillis()
-                                                )
-                                            } else chat
-                                        }
-                                    } else {
-                                        generateContentStream(
-                                            apiKey = apiKey,
-                                            modelName = settings.model,
-                                            prompt = lastUserMsg.content,
-                                            history = historyWithoutLastUser,
-                                            provider = settings.provider,
-                                            baseUrl = resolvedBaseUrl,
-                                            systemInstruction = effectiveSystemInstruction,
-                                            temperature = effectiveTemp,
-                                            topP = effectiveTopP,
-                                            topK = effectiveTopK,
-                                            maxTokens = effectiveMaxTokens,
-                                            attachments = lastUserMsg.attachments,
-                                            onChunkReceived = { deltaText, _ ->
-                                            if (firstTokenTime == null && deltaText.isNotEmpty()) {
-                                                firstTokenTime = System.currentTimeMillis()
-                                            }
-                                            chats = chats.map { chat ->
-                                                if (chat.id == currentChatId) {
-                                                    val updatedMessages = chat.messages.map { msg ->
-                                                        if (msg.id == modelMsgId) msg.copy(content = msg.content + deltaText) else msg
-                                                    }
-                                                    chat.copy(messages = updatedMessages, updatedAt = System.currentTimeMillis())
-                                                } else chat
-                                            }
-                                        }
-                                    )
-                                    }
-                                    val endTime = System.currentTimeMillis()
-                                    val ttft = firstTokenTime ?: endTime
-                                    val latency = ttft - startTime
-                                    val decodeMs = (endTime - ttft).coerceAtLeast(1)
-                                    chats = chats.map { chat ->
-                                        if (chat.id == currentChatId) {
-                                            val updatedMessages = chat.messages.map { msg ->
-                                                if (msg.id == modelMsgId) {
-                                                    val approxTokens = msg.content.length / 4.0
-                                                    msg.copy(
-                                                        latencyMs = latency,
-                                                        tokensPerSecond = (approxTokens / (decodeMs / 1000.0)).toFloat()
-                                                    )
-                                                } else msg
-                                            }
-                                            chat.copy(messages = updatedMessages)
-                                        } else chat
-                                    }
+                                     if (settings.enableTools && mcpServerManager.availableTools.isNotEmpty()) {
+                                         val finalText = runAgenticTurn(
+                                             mcpServerManager = mcpServerManager,
+                                             provider = settings.provider,
+                                             apiKey = apiKey,
+                                             modelName = settings.model,
+                                             baseUrl = resolvedBaseUrl,
+                                             systemInstruction = combinedSystemInstruction,
+                                             temperature = effectiveTemp,
+                                             topP = effectiveTopP,
+                                             topK = effectiveTopK,
+                                             maxTokens = effectiveMaxTokens,
+                                             userMessage = lastUserMsg.content,
+                                             priorHistory = historyWithoutLastUser,
+                                             context = this@MainActivity,
+                                             vaultIndexer = storage.vaultIndexer,
+                                             onToolCallsUpdated = { states ->
+                                                 chats = chats.map { chat ->
+                                                     if (chat.id == currentChatId) {
+                                                         chat.copy(messages = chat.messages.map { msg ->
+                                                             if (msg.id == modelMsgId) msg.copy(toolCalls = states) else msg
+                                                         })
+                                                     } else chat
+                                                 }
+                                             }
+                                         )
+                                         firstTokenTime = System.currentTimeMillis()
+                                         chats = chats.map { chat ->
+                                             if (chat.id == currentChatId) {
+                                                 chat.copy(
+                                                     messages = chat.messages.map { msg ->
+                                                         if (msg.id == modelMsgId) msg.copy(content = finalText) else msg
+                                                     },
+                                                     updatedAt = System.currentTimeMillis()
+                                                 )
+                                             } else chat
+                                         }
+                                     } else {
+                                         generateContentStream(
+                                             apiKey = apiKey,
+                                             modelName = settings.model,
+                                             prompt = lastUserMsg.content,
+                                             history = historyWithoutLastUser,
+                                             provider = settings.provider,
+                                             baseUrl = resolvedBaseUrl,
+                                             systemInstruction = effectiveSystemInstruction,
+                                             temperature = effectiveTemp,
+                                             topP = effectiveTopP,
+                                             topK = effectiveTopK,
+                                             maxTokens = effectiveMaxTokens,
+                                             attachments = lastUserMsg.attachments,
+                                             onChunkReceived = { deltaText, deltaThought ->
+                                                 val now = System.currentTimeMillis()
+                                                 if (firstTokenTime == null && (deltaText.isNotEmpty() || !deltaThought.isNullOrEmpty())) {
+                                                     firstTokenTime = now
+                                                 }
+                                                 if (!deltaThought.isNullOrEmpty()) {
+                                                     if (firstThoughtTokenTime == null) firstThoughtTokenTime = now
+                                                     lastThoughtTokenTime = now
+                                                 }
+                                                 if (deltaText.isNotEmpty()) {
+                                                     if (firstTextTokenTime == null) firstTextTokenTime = now
+                                                 }
+                                                 chats = chats.map { chat ->
+                                                     if (chat.id == currentChatId) {
+                                                         val updatedMessages = chat.messages.map { msg ->
+                                                             if (msg.id == modelMsgId) {
+                                                                 val updatedThought = if (!deltaThought.isNullOrEmpty()) {
+                                                                     (msg.thought ?: "") + deltaThought
+                                                                 } else msg.thought
+                                                                 val updatedContent = if (deltaText.isNotEmpty()) {
+                                                                     msg.content + deltaText
+                                                                 } else msg.content
+                                                                 msg.copy(
+                                                                     content = updatedContent,
+                                                                     thought = updatedThought,
+                                                                     isThinking = !deltaThought.isNullOrEmpty() && deltaText.isEmpty()
+                                                                 )
+                                                             } else msg
+                                                         }
+                                                         chat.copy(messages = updatedMessages, updatedAt = System.currentTimeMillis())
+                                                     } else chat
+                                                 }
+                                             }
+                                         )
+                                     }
+                                     val endTime = System.currentTimeMillis()
+                                     val ttft = firstTokenTime ?: endTime
+                                     val latency = ttft - startTime
+                                     val decodeMs = (endTime - ttft).coerceAtLeast(1)
+                                     val ft2 = firstThoughtTokenTime
+                                     val thoughtDuration = if (ft2 != null) {
+                                         val endOfThought = firstTextTokenTime ?: lastThoughtTokenTime ?: endTime
+                                         (endOfThought - ft2).coerceAtLeast(0L)
+                                     } else null
+
+                                     chats = chats.map { chat ->
+                                         if (chat.id == currentChatId) {
+                                             val updatedMessages = chat.messages.map { msg ->
+                                                 if (msg.id == modelMsgId) {
+                                                     val approxTokens = msg.content.length / 4.0
+                                                     msg.copy(
+                                                         latencyMs = latency,
+                                                         tokensPerSecond = (approxTokens / (decodeMs / 1000.0)).toFloat(),
+                                                         thoughtDurationMs = thoughtDuration,
+                                                         isThinking = false
+                                                     )
+                                                 } else msg
+                                             }
+                                             chat.copy(messages = updatedMessages)
+                                         } else chat
+                                     }
                                 } catch (e: Exception) {
                                     chats = chats.map { chat ->
                                         if (chat.id == currentChatId) {
@@ -482,6 +513,9 @@ class MainActivity : FragmentActivity() {
                                 }
                                 val startTime = System.currentTimeMillis()
                                 var firstTokenTime: Long? = null
+                                var firstThoughtTokenTime: Long? = null
+                                var lastThoughtTokenTime: Long? = null
+                                var firstTextTokenTime: Long? = null
                                 try {
                                      val apiKey = oorty.sednium.app.ui.screens.apiKeyFor(settings)
                                      if (apiKey.isBlank() && settings.provider != oorty.sednium.app.model.ModelProvider.LOCAL && settings.provider != oorty.sednium.app.model.ModelProvider.LOCAL_GGUF && settings.provider != oorty.sednium.app.model.ModelProvider.NONE) {
@@ -549,14 +583,34 @@ class MainActivity : FragmentActivity() {
                                             topK = effectiveTopK,
                                             maxTokens = effectiveMaxTokens,
                                             attachments = attachments,
-                                            onChunkReceived = { deltaText, _ ->
-                                                if (firstTokenTime == null && deltaText.isNotEmpty()) {
-                                                    firstTokenTime = System.currentTimeMillis()
+                                            onChunkReceived = { deltaText, deltaThought ->
+                                                val now = System.currentTimeMillis()
+                                                if (firstTokenTime == null && (deltaText.isNotEmpty() || !deltaThought.isNullOrEmpty())) {
+                                                    firstTokenTime = now
+                                                }
+                                                if (!deltaThought.isNullOrEmpty()) {
+                                                    if (firstThoughtTokenTime == null) firstThoughtTokenTime = now
+                                                    lastThoughtTokenTime = now
+                                                }
+                                                if (deltaText.isNotEmpty()) {
+                                                    if (firstTextTokenTime == null) firstTextTokenTime = now
                                                 }
                                                 chats = chats.map { chat ->
                                                     if (chat.id == currentChatId) {
                                                         val newMessages = chat.messages.map { msg ->
-                                                            if (msg.id == modelMsgId) msg.copy(content = msg.content + deltaText) else msg
+                                                            if (msg.id == modelMsgId) {
+                                                                val updatedThought = if (!deltaThought.isNullOrEmpty()) {
+                                                                    (msg.thought ?: "") + deltaThought
+                                                                } else msg.thought
+                                                                val updatedContent = if (deltaText.isNotEmpty()) {
+                                                                    msg.content + deltaText
+                                                                } else msg.content
+                                                                msg.copy(
+                                                                    content = updatedContent,
+                                                                    thought = updatedThought,
+                                                                    isThinking = !deltaThought.isNullOrEmpty() && deltaText.isEmpty()
+                                                                )
+                                                            } else msg
                                                         }
                                                         chat.copy(messages = newMessages, updatedAt = System.currentTimeMillis())
                                                     } else chat
@@ -565,13 +619,16 @@ class MainActivity : FragmentActivity() {
                                         )
                                     }
                                     // --- Performance Insights ---
-                                    // tokensPerSecond is approximate (chars/4 heuristic) since
-                                    // these streaming APIs don't report exact per-chunk token
-                                    // counts — see the comment on ChatMessage.tokensPerSecond.
                                     val endTime = System.currentTimeMillis()
                                     val ttft = firstTokenTime ?: endTime
                                     val latency = ttft - startTime
                                     val decodeMs = (endTime - ttft).coerceAtLeast(1)
+                                    val ft2 = firstThoughtTokenTime
+                                    val thoughtDuration = if (ft2 != null) {
+                                        val endOfThought = firstTextTokenTime ?: lastThoughtTokenTime ?: endTime
+                                        (endOfThought - ft2).coerceAtLeast(0L)
+                                    } else null
+
                                     chats = chats.map { chat ->
                                         if (chat.id == currentChatId) {
                                             val newMessages = chat.messages.map { msg ->
@@ -579,7 +636,9 @@ class MainActivity : FragmentActivity() {
                                                     val approxTokens = msg.content.length / 4.0
                                                     msg.copy(
                                                         latencyMs = latency,
-                                                        tokensPerSecond = (approxTokens / (decodeMs / 1000.0)).toFloat()
+                                                        tokensPerSecond = (approxTokens / (decodeMs / 1000.0)).toFloat(),
+                                                        thoughtDurationMs = thoughtDuration,
+                                                        isThinking = false
                                                     )
                                                 } else msg
                                             }

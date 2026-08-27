@@ -1,45 +1,47 @@
 package oorty.sednium.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import oorty.sednium.app.navigation.LocalServerStatus
+import oorty.sednium.app.ui.theme.LocalSedniumIsDark
 import oorty.sednium.app.ui.theme.OrangeAlpha
 import oorty.sednium.app.ui.theme.SedniumColors
 
-import androidx.compose.foundation.layout.statusBarsPadding
-
-import androidx.compose.material.icons.filled.Share
-
-import oorty.sednium.app.navigation.LocalServerStatus
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.graphics.Color
-
 /**
- * Direct port of the <div className="flex-none h-14 ..."> header in App.tsx.
- * Background: bg-sedYellow/90 + backdrop-blur-sm -> emulated with a flat
- * 90%-alpha fill (Android doesn't get free backdrop-filter on a Box).
+ * Editorial top navigation bar with full dark mode support.
  */
 @Composable
 fun SedniumTopBar(
@@ -53,14 +55,20 @@ fun SedniumTopBar(
     onExportClick: () -> Unit = {},
     onClearClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onSessionConfigClick: () -> Unit = {},
     onFocusModeToggle: () -> Unit = {}
 ) {
+    val isDark = LocalSedniumIsDark.current
+    val accentColor = if (isDark) SedniumColors.DarkOrange else SedniumColors.Orange
+    val topBarBg = if (isDark) Color(0xFF1E1E1E).copy(alpha = 0.96f) else SedniumColors.Milk.copy(alpha = 0.94f)
+    val subtitleColor = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a70
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(SedniumColors.Milk.copy(alpha = 0.92f))
+            .background(topBarBg)
             .statusBarsPadding()
-            .height(56.dp) // h-14
+            .height(56.dp)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -70,14 +78,14 @@ fun SedniumTopBar(
         ) {
             if (!isFocusMode) {
                 IconButton(onClick = onMenuClick) {
-                    Icon(Icons.Filled.Menu, contentDescription = "Chats", tint = SedniumColors.Orange)
+                    Icon(Icons.Filled.Menu, contentDescription = "Chats", tint = accentColor)
                 }
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = title.ifBlank { "Sednium AI" },
+                    text = title.ifBlank { "Oorty AI" },
                     style = MaterialTheme.typography.titleMedium,
-                    color = SedniumColors.Orange,
+                    color = accentColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -85,7 +93,7 @@ fun SedniumTopBar(
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.labelSmall,
-                        color = OrangeAlpha.a70,
+                        color = subtitleColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -97,7 +105,7 @@ fun SedniumTopBar(
                             LocalServerStatus.OFFLINE -> Color(0xFFF44336)
                             else -> Color.Transparent
                         }
-                        androidx.compose.foundation.layout.Box(
+                        Box(
                             modifier = Modifier
                                 .size(8.dp)
                                 .clip(CircleShape)
@@ -110,20 +118,20 @@ fun SedniumTopBar(
 
         if (showExport && !isFocusMode) {
             IconButton(onClick = onExportClick) {
-                Icon(Icons.Filled.Share, contentDescription = "Export chat", tint = SedniumColors.Orange)
+                Icon(Icons.Filled.Share, contentDescription = "Export chat", tint = accentColor)
             }
         }
         
-        val showClearConfirmDialog = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+        val showClearConfirmDialog = remember { mutableStateOf(false) }
 
         if (showClearConfirmDialog.value) {
-            androidx.compose.material3.AlertDialog(
+            AlertDialog(
                 onDismissRequest = { showClearConfirmDialog.value = false },
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                title = { Text("Clear Chat", color = SedniumColors.Orange) },
-                text = { Text("Are you sure you want to clear all messages in this chat?", color = MaterialTheme.colorScheme.onSurface) },
+                shape = RoundedCornerShape(12.dp),
+                title = { Text("Clear Chat", color = accentColor) },
+                text = { Text("Are you sure you want to clear all messages in this chat?", color = if (isDark) SedniumColors.Gray200 else SedniumColors.Gray800) },
                 confirmButton = {
-                    androidx.compose.material3.TextButton(onClick = {
+                    TextButton(onClick = {
                         onClearClick()
                         showClearConfirmDialog.value = false
                     }) {
@@ -131,25 +139,25 @@ fun SedniumTopBar(
                     }
                 },
                 dismissButton = {
-                    androidx.compose.material3.TextButton(onClick = { showClearConfirmDialog.value = false }) {
-                        Text("Cancel", color = SedniumColors.Orange)
+                    TextButton(onClick = { showClearConfirmDialog.value = false }) {
+                        Text("Cancel", color = accentColor)
                     }
                 },
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = if (isDark) Color(0xFF262626) else SedniumColors.Milk
             )
         }
 
         if (showClear && !isFocusMode) {
             IconButton(onClick = { showClearConfirmDialog.value = true }) {
-                Icon(Icons.Filled.Delete, contentDescription = "Clear chat", tint = SedniumColors.Orange)
+                Icon(Icons.Filled.Delete, contentDescription = "Clear chat", tint = accentColor)
             }
         }
         IconButton(onClick = onFocusModeToggle) {
-            Icon(if (isFocusMode) androidx.compose.material.icons.Icons.Filled.VisibilityOff else androidx.compose.material.icons.Icons.Filled.Visibility, contentDescription = "Focus Mode", tint = SedniumColors.Orange)
+            Icon(if (isFocusMode) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, contentDescription = "Focus Mode", tint = accentColor)
         }
         if (!isFocusMode) {
             IconButton(onClick = onSettingsClick) {
-                Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = SedniumColors.Orange)
+                Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = accentColor)
             }
         }
     }

@@ -27,6 +27,32 @@ enum class HardwareFit(
     )
 }
 
+enum class ModelSuitability(
+    val label: String,
+    val badgeColor: Color,
+    val textColor: Color,
+    val description: String
+) {
+    RECOMMENDED(
+        label = "Recommended",
+        badgeColor = Color(0x2610B981),
+        textColor = Color(0xFF10B981),
+        description = "Comfortably fits within available RAM with low thermal load."
+    ),
+    MAY_OVERHEAT(
+        label = "May Overheat",
+        badgeColor = Color(0x26F59E0B),
+        textColor = Color(0xFFF59E0B),
+        description = "High compute requirements; device may get warm during extended generation."
+    ),
+    NOT_ABLE_TO_RUN(
+        label = "Not Able to Run",
+        badgeColor = Color(0x26EF4444),
+        textColor = Color(0xFFEF4444),
+        description = "Model size exceeds physical RAM capacity on this device."
+    )
+}
+
 object HardwareChecker {
 
     fun getAvailableRamMb(context: Context): Int {
@@ -36,7 +62,7 @@ object HardwareChecker {
             activityManager?.getMemoryInfo(memoryInfo)
             (memoryInfo.availMem / (1024 * 1024)).toInt()
         } catch (e: Exception) {
-            2048 // Fallback estimate
+            2048
         }
     }
 
@@ -47,7 +73,7 @@ object HardwareChecker {
             activityManager?.getMemoryInfo(memoryInfo)
             (memoryInfo.totalMem / (1024 * 1024)).toInt()
         } catch (e: Exception) {
-            4096 // Fallback estimate
+            4096
         }
     }
 
@@ -72,12 +98,30 @@ object HardwareChecker {
     }
 
     fun isModelRecommended(modelName: String, context: Context): Boolean {
+        return getSuitability(modelName, context) == ModelSuitability.RECOMMENDED
+    }
+
+    fun getSuitability(modelName: String, context: Context): ModelSuitability {
         val totalRamMb = getTotalRamMb(context)
         val lower = modelName.lowercase()
+        val isLarge = lower.contains("14b") || lower.contains("27b") || lower.contains("32b") || lower.contains("70b") || lower.contains("72b")
+        val isMedium = lower.contains("7b") || lower.contains("8b") || lower.contains("9b")
+        val isSmall = lower.contains("0.5b") || lower.contains("1b") || lower.contains("1.5b") || lower.contains("2b") || lower.contains("3b") || lower.contains("mini")
+
         return when {
-            totalRamMb <= 4096 -> lower.contains("0.5b") || lower.contains("1b")
-            totalRamMb <= 6144 -> lower.contains("0.5b") || lower.contains("1b") || lower.contains("2b")
-            else -> true
+            isLarge -> {
+                if (totalRamMb >= 16384) ModelSuitability.MAY_OVERHEAT else ModelSuitability.NOT_ABLE_TO_RUN
+            }
+            isMedium -> {
+                if (totalRamMb <= 6144) ModelSuitability.NOT_ABLE_TO_RUN
+                else ModelSuitability.MAY_OVERHEAT
+            }
+            isSmall -> {
+                ModelSuitability.RECOMMENDED
+            }
+            else -> {
+                if (totalRamMb >= 8192) ModelSuitability.RECOMMENDED else ModelSuitability.MAY_OVERHEAT
+            }
         }
     }
 }

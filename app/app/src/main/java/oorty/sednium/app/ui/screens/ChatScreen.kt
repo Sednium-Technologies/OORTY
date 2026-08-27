@@ -46,6 +46,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -399,16 +400,21 @@ fun ChatScreen(
             }
         }
     ) { padding ->
-        if (messages.isEmpty()) {
-            EmptyState(
-                isConfigValid = isConfigValid,
-                providerName = providerName,
-                modelLabel = settings.model,
-                onTapConfigure = onSettingsClick,
-                modifier = Modifier.fillMaxSize().padding(padding)
-            )
-        } else {
-            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            val isDark = oorty.sednium.app.ui.theme.LocalSedniumIsDark.current
+            val accentColor = if (isDark) SedniumColors.DarkOrange else SedniumColors.Orange
+
+            if (messages.isEmpty()) {
+                EmptyState(
+                    isConfigValid = isConfigValid,
+                    providerName = providerName,
+                    modelLabel = settings.model,
+                    isDark = isDark,
+                    accentColor = accentColor,
+                    onTapConfigure = onSettingsClick,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
@@ -419,7 +425,7 @@ fun ChatScreen(
                         ChatBubble(
                             msg = msg,
                             providerName = providerName,
-                            isDark = false,
+                            isDark = isDark,
                             isGenerating = isLoading && isLast,
                             showPerformanceStats = settings.showPerformanceStats,
                             onImageClick = onImageClick,
@@ -451,7 +457,7 @@ fun ChatScreen(
                                 listState.animateScrollToItem(messages.size - 1)
                             }
                         },
-                        containerColor = SedniumColors.Orange,
+                        containerColor = accentColor,
                         contentColor = SedniumColors.Milk,
                         modifier = Modifier.size(40.dp)
                     ) {
@@ -469,6 +475,8 @@ private fun EmptyState(
     isConfigValid: Boolean,
     providerName: String,
     modelLabel: String,
+    isDark: Boolean,
+    accentColor: androidx.compose.ui.graphics.Color,
     onTapConfigure: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -481,7 +489,7 @@ private fun EmptyState(
             modifier = Modifier
                 .size(64.dp)
                 .clip(RoundedCornerShape(SedniumRadii.lg))
-                .background(SedniumColors.Orange),
+                .background(accentColor),
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -494,7 +502,7 @@ private fun EmptyState(
         Text(
             "Ready to Chat",
             style = MaterialTheme.typography.titleLarge,
-            color = SedniumColors.Orange,
+            color = if (isDark) SedniumColors.Gray100 else accentColor,
             modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
         )
 
@@ -503,20 +511,20 @@ private fun EmptyState(
                 modifier = Modifier
                     .padding(top = 16.dp)
                     .clip(RoundedCornerShape(SedniumRadii.md))
-                    .background(OrangeAlpha.a10)
-                    .border(1.dp, OrangeAlpha.a20, RoundedCornerShape(SedniumRadii.md))
+                    .background(if (isDark) Color(0xFF262626) else OrangeAlpha.a10)
+                    .border(1.dp, if (isDark) SedniumColors.Gray700 else OrangeAlpha.a20, RoundedCornerShape(SedniumRadii.md))
                     .clickable(onClick = onTapConfigure)
                     .padding(12.dp)
             ) {
-                Icon(Icons.Filled.ErrorOutline, contentDescription = null, tint = SedniumColors.Orange)
-                Text("Configuration Needed", color = SedniumColors.Orange, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
-                Text("Tap to setup $providerName", color = OrangeAlpha.a70, style = MaterialTheme.typography.labelSmall)
+                Icon(Icons.Filled.ErrorOutline, contentDescription = null, tint = accentColor)
+                Text("Configuration Needed", color = accentColor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+                Text("Tap to setup $providerName", color = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a70, style = MaterialTheme.typography.labelSmall)
             }
         } else {
             Text(
                 "Using ${modelLabel.ifBlank { "Unknown Model" }}.\nStart typing to generate a response.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = SedniumColors.Orange.copy(alpha = 0.7f),
+                color = if (isDark) SedniumColors.Gray400 else accentColor.copy(alpha = 0.7f),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }

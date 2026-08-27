@@ -292,6 +292,10 @@ suspend fun generateContentStream(
     onChunkReceived: (String, String?) -> Unit // (deltaText, deltaThought)
 ) = withContext(Dispatchers.IO) {
     val cleanApiKey = apiKey.trim()
+    val thoughtParser = StreamingThoughtParser(onChunkReceived)
+    val emitChunk: (String, String?) -> Unit = { text, thought ->
+        thoughtParser.processChunk(text, thought)
+    }
     if (provider == oorty.sednium.app.model.ModelProvider.NONE) {
         onChunkReceived("Error: No provider selected. Please select a provider in settings.", null)
         return@withContext
@@ -368,17 +372,29 @@ suspend fun generateContentStream(
                         val data = line!!.removePrefix("data: ")
                         try {
                             val chunk = Json.parseToJsonElement(data).jsonObject
-                            val text = chunk["candidates"]?.jsonArray
+                            val parts = chunk["candidates"]?.jsonArray
                                 ?.getOrNull(0)?.jsonObject
                                 ?.get("content")?.jsonObject
                                 ?.get("parts")?.jsonArray
-                                ?.getOrNull(0)?.jsonObject
-                                ?.get("text")?.jsonPrimitive?.content
-                            if (text != null) onChunkReceived(text, null)
+                            parts?.forEach { partElement ->
+                                val partObj = partElement.jsonObject
+                                val text = partObj["text"]?.jsonPrimitive?.content
+                                val isThought = try {
+                                    partObj["thought"]?.jsonPrimitive?.content?.equals("true", ignoreCase = true) == true
+                                } catch (e: Exception) { false }
+                                if (text != null && text.isNotEmpty()) {
+                                    if (isThought) {
+                                        emitChunk("", text)
+                                    } else {
+                                        emitChunk(text, null)
+                                    }
+                                }
+                            }
                         } catch (e: Exception) {}
                     }
                 }
             }
+            thoughtParser.flush()
         } catch (e: Exception) {
             val errorMsg = if (e is retrofit2.HttpException) {
                 try {
@@ -397,7 +413,8 @@ suspend fun generateContentStream(
             } else {
                 e.message ?: "Unknown error"
             }
-            onChunkReceived("Error: $errorMsg\n", null)
+            emitChunk("Error: $errorMsg\n", null)
+            thoughtParser.flush()
         }
     } else if (provider == oorty.sednium.app.model.ModelProvider.ANTHROPIC) {
         val messagesArray = kotlinx.serialization.json.buildJsonArray {
@@ -438,20 +455,24 @@ suspend fun generateContentStream(
                         try {
                             val chunk = Json.parseToJsonElement(data).jsonObject
                             if (chunk["type"]?.jsonPrimitive?.content == "content_block_delta") {
-                                val text = chunk["delta"]?.jsonObject?.get("text")?.jsonPrimitive?.content ?: ""
-                                if (text.isNotEmpty()) onChunkReceived(text, null)
+                                val deltaObj = chunk["delta"]?.jsonObject
+                                val thinking = deltaObj?.get("thinking")?.jsonPrimitive?.content ?: ""
+                                val text = deltaObj?.get("text")?.jsonPrimitive?.content ?: ""
+                                if (thinking.isNotEmpty()) emitChunk("", thinking)
+                                if (text.isNotEmpty()) emitChunk(text, null)
                             } else if (chunk["type"]?.jsonPrimitive?.content == "error") {
                                 val msg = chunk["error"]?.jsonObject?.get("message")?.jsonPrimitive?.content ?: "Unknown Error"
-                                onChunkReceived("Error: $msg\n", null)
+                                emitChunk("Error: $msg\n", null)
                             }
                         } catch (e: Exception) {}
                     } else if (line!!.startsWith("{")) {
                         if(line!!.contains("error")) {
-                             onChunkReceived("Error: ${line}\n", null)
+                             emitChunk("Error: ${line}\n", null)
                         }
                     }
                 }
             }
+            thoughtParser.flush()
         } catch (e: Exception) {
             val errorMsg = if (e is retrofit2.HttpException) {
                 try {
@@ -485,11 +506,13 @@ suspend fun generateContentStream(
                 temperature = temperature,
                 maxTokens = maxTokens
             ).collect { chunk ->
-                onChunkReceived(chunk, null)
+                emitChunk(chunk, null)
             }
+            thoughtParser.flush()
         } catch (e: Exception) {
             val errorMsg = e.message ?: "Local GGUF execution failed"
-            onChunkReceived("Error: $errorMsg\n", null)
+            emitChunk("Error: $errorMsg\n", null)
+            thoughtParser.flush()
         }
     } else {
         // OpenAI format fallback for other providers (including LOCAL server)
@@ -542,20 +565,31 @@ suspend fun generateContentStream(
                         val data = line!!.removePrefix("data: ")
                         try {
                             val chunk = Json.parseToJsonElement(data).jsonObject
-                            val text = chunk["choices"]?.jsonArray
+                            val delta = chunk["choices"]?.jsonArray
                                 ?.getOrNull(0)?.jsonObject
                                 ?.get("delta")?.jsonObject
-                                ?.get("content")?.jsonPrimitive?.content ?: ""
-                            if (text.isNotEmpty()) onChunkReceived(text, null)
+                            val reasoning = delta?.get("reasoning_content")?.jsonPrimitive?.content
+                                ?: delta?.get("reasoning")?.jsonPrimitive?.content
+                                ?: delta?.get("thought")?.jsonPrimitive?.content
+                                ?: ""
+                            val text = delta?.get("content")?.jsonPrimitive?.content ?: ""
+
+                            if (reasoning.isNotEmpty()) {
+                                emitChunk("", reasoning)
+                            }
+                            if (text.isNotEmpty()) {
+                                emitChunk(text, null)
+                            }
                         } catch (e: Exception) {}
                     } else if (line!!.startsWith("{")) {
                         // might be an error or unstreamed reply
                         if(line!!.contains("error")) {
-                             onChunkReceived("Error: ${line}\n", null)
+                             emitChunk("Error: ${line}\n", null)
                         }
                     }
                 }
             }
+            thoughtParser.flush()
         } catch (e: Exception) {
             val errorMsg = if (e is retrofit2.HttpException) {
                 try {
@@ -574,7 +608,8 @@ suspend fun generateContentStream(
             } else {
                 e.message ?: "Unknown error"
             }
-            onChunkReceived("Error: $errorMsg\n", null)
+            emitChunk("Error: $errorMsg\n", null)
+            thoughtParser.flush()
         }
     }
 }

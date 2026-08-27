@@ -59,7 +59,8 @@ import kotlinx.serialization.Serializable
     // a relative "which provider/model felt faster" signal, not a precise
     // figure.
     val latencyMs: Long? = null,
-    val tokensPerSecond: Float? = null
+    val tokensPerSecond: Float? = null,
+    val thoughtDurationMs: Long? = null
 )
 
 @Serializable data class ChatSession(
@@ -143,7 +144,8 @@ enum class McpConnectionStatus {
     val localBaseUrl: String = "http://localhost:11434/v1",
     val customApiKey: String = "",
     val ggufModelUri: String = "",
-    val ggufModelPath: String = ""
+    val ggufModelPath: String = "",
+    val useSerifFont: Boolean = true
 ) {
     val currentSystemInstruction: String
         get() = when (chatMode) {
