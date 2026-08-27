@@ -296,11 +296,11 @@ a {
 }
 
 /* ==========================================================================
-   Hero Section
+   Hero Section & Side-by-Side Phone Simulator
    ========================================================================== */
 
 .hero {
-    padding: 140px 0 80px;
+    padding: 130px 0 70px;
     position: relative;
     overflow: hidden;
 }
@@ -310,41 +310,26 @@ a {
     inset: 0;
     pointer-events: none;
     opacity: 0.4;
-    background-radial-gradient: radial-gradient(circle at 20% 30%, rgba(236, 94, 39, 0.08) 0%, transparent 40%),
-                                radial-gradient(circle at 80% 70%, rgba(236, 94, 39, 0.05) 0%, transparent 40%);
+    background: radial-gradient(circle at 20% 30%, rgba(236, 94, 39, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(236, 94, 39, 0.05) 0%, transparent 40%);
 }
 
-.hero-tag {
-    display: inline-flex;
+.hero-grid-container {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 48px;
     align-items: center;
-    gap: 8px;
-    background: var(--color-orange-subtle);
-    border: 1px solid var(--border-orange);
-    color: var(--color-orange);
-    padding: 6px 14px;
-    border-radius: var(--radius-full);
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 20px;
 }
 
-.pulse-dot {
-    width: 8px;
-    height: 8px;
-    background: var(--color-orange);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(236, 94, 39, 0.7); }
-    70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(236, 94, 39, 0); }
-    100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(236, 94, 39, 0); }
+.hero-content {
+    display: flex;
+    flex-direction: column;
 }
 
 .hero-title {
-    font-size: 3.8rem;
+    font-size: 3.6rem;
     letter-spacing: -0.03em;
+    line-height: 1.15;
     margin-bottom: 20px;
 }
 
@@ -353,9 +338,9 @@ a {
 }
 
 .hero-subtitle {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     color: var(--text-secondary);
-    max-width: 640px;
+    line-height: 1.65;
     margin-bottom: 32px;
 }
 
@@ -363,141 +348,352 @@ a {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
-    margin-bottom: 48px;
+    margin-bottom: 40px;
 }
 
 .hero-stats {
-    display: flex;
-    gap: 32px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
     border-top: 1px solid var(--border-color);
     padding-top: 24px;
-    max-width: 640px;
 }
 
 .stat-number {
     display: block;
     font-family: var(--font-serif);
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: var(--color-orange);
 }
 
 .stat-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 500;
 }
 
 /* ==========================================================================
-   Interactive Live Demo Sandbox
+   Smartphone Device Mockup & Simulator
    ========================================================================== */
 
 .hero-visual {
-    margin-top: 60px;
-}
-
-.demo-card {
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-lg);
-    overflow: hidden;
-}
-
-.demo-tabs {
     display: flex;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    padding: 8px 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.phone-frame {
+    width: 100%;
+    max-width: 380px;
+    background: #18181B;
+    border-radius: 40px;
+    padding: 10px;
+    border: 4px solid #27272A;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    position: relative;
+    margin: 0 auto;
+}
+
+.phone-island {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 18px;
+    background: #09090B;
+    border-radius: 20px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 8px;
-    overflow-x: auto;
 }
 
-.demo-tab {
-    background: none;
-    border: none;
-    padding: 8px 16px;
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    white-space: nowrap;
+.camera-lens {
+    width: 8px;
+    height: 8px;
+    background: #1E1E24;
+    border-radius: 50%;
+    border: 1px solid #3F3F46;
 }
 
-.demo-tab:hover {
-    color: var(--color-orange);
+.speaker-pill {
+    width: 24px;
+    height: 3px;
+    background: #27272A;
+    border-radius: 2px;
 }
 
-.demo-tab.active {
-    background: var(--bg-card);
-    color: var(--color-orange);
-    box-shadow: var(--shadow-sm);
+.phone-screen {
+    background: #0F0F11;
+    border-radius: 32px;
+    padding: 24px 14px 14px;
+    color: #FAFAFA;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+    overflow: hidden;
+    position: relative;
 }
 
-.demo-view {
-    display: none;
-    padding: 24px;
-}
-
-.demo-view.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.demo-header-bar {
+/* Phone Status Bar */
+.phone-status-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #A1A1AA;
+    padding: 0 6px 8px;
 }
 
-.pill {
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: var(--radius-full);
+.phone-status-icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.pill-green { background: var(--color-green-glow); color: var(--color-green); }
-.pill-orange { background: var(--color-orange-subtle); color: var(--color-orange); }
-.pill-blue { background: rgba(59, 130, 246, 0.12); color: #3B82F6; }
-.pill-purple { background: rgba(147, 51, 234, 0.12); color: #9333EA; }
-
-.dot-green {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    background: var(--color-green);
-    border-radius: 50%;
-    margin-right: 4px;
+/* Phone App Bar */
+.phone-app-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #18181B;
+    padding: 8px 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    border: 1px solid #27272A;
 }
 
-.stats-badge {
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    color: var(--text-muted);
+.app-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.demo-chat-box {
+.app-bar-avatar {
+    border-radius: 6px;
+}
+
+.app-bar-meta {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    margin-bottom: 16px;
 }
 
-.demo-msg {
+.app-bar-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+}
+
+.app-bar-sub {
+    font-size: 0.68rem;
+    color: var(--color-orange);
+    font-family: var(--font-mono);
+}
+
+.app-bar-pill {
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--color-green);
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+/* Mode Tabs inside Phone */
+.demo-tabs.in-phone {
     display: flex;
-    gap: 12px;
-    align-items: flex-start;
+    background: #18181B;
+    border-radius: 10px;
+    padding: 3px;
+    gap: 4px;
+    margin-bottom: 8px;
+    border: 1px solid #27272A;
+}
+
+.demo-tabs.in-phone .demo-tab {
+    flex: 1;
+    text-align: center;
+    font-size: 0.72rem;
+    padding: 5px 0;
+    border-radius: 6px;
+    color: #A1A1AA;
+}
+
+.demo-tabs.in-phone .demo-tab.active {
+    background: var(--color-orange);
+    color: white;
+}
+
+/* Views inside Phone */
+.demo-view {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.demo-view.active {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.2s ease;
+}
+
+.phone-chat-scroll {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.phone-chat-scroll .user-msg .msg-bubble {
+    background: var(--color-orange);
+    color: white;
+    font-size: 0.82rem;
+    padding: 8px 12px;
+    border-radius: 12px 12px 2px 12px;
+    align-self: flex-end;
+    max-width: 85%;
+}
+
+.phone-chat-scroll .bot-msg .code-bubble {
+    background: #18181B;
+    border-radius: 12px;
+    border: 1px solid #27272A;
+    overflow: hidden;
+    font-size: 0.78rem;
+}
+
+.phone-chat-scroll .code-top {
+    display: flex;
+    justify-content: space-between;
+    background: #111827;
+    padding: 4px 10px;
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    color: #9CA3AF;
+}
+
+.phone-chat-scroll pre {
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    color: #D1D5DB;
+    overflow-x: auto;
+}
+
+.phone-telemetry-tag {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.68rem;
+    color: #9CA3AF;
+    background: #18181B;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin: 6px 0;
+}
+
+.vault-tick {
+    color: var(--color-green);
+    font-weight: 700;
+}
+
+/* Obsidian inside Phone */
+.phone-markdown-box pre {
+    background: #18181B;
+    padding: 10px;
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: #D4D4D8;
+    line-height: 1.4;
+    border: 1px solid #27272A;
+}
+
+/* Terminal inside Phone */
+.phone-terminal-box {
+    background: #09090B;
+    padding: 10px;
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: 1px solid #27272A;
+}
+
+/* Cloud Grid inside Phone */
+.phone-cloud-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.cloud-mini-card {
+    background: #18181B;
+    border: 1px solid #27272A;
+    padding: 10px 8px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.72rem;
+}
+
+.cloud-mini-card.active {
+    border-color: var(--color-orange);
+    background: rgba(236, 94, 39, 0.15);
+}
+
+.cloud-mini-card strong {
+    color: white;
+}
+
+.cloud-mini-card span {
+    color: #9CA3AF;
+    font-size: 0.65rem;
+    margin-top: 2px;
+}
+
+/* Phone Composer */
+.phone-composer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #18181B;
+    border: 1px solid #27272A;
+    padding: 6px 10px;
+    border-radius: 20px;
+    margin-top: 6px;
+}
+
+.composer-icon, .composer-mic {
+    font-size: 0.85rem;
+    color: #9CA3AF;
+    cursor: pointer;
+}
+
+.composer-input {
+    flex: 1;
+    font-size: 0.72rem;
+    color: #71717A;
+}
+
+.composer-send {
+    width: 24px;
+    height: 24px;
+    background: var(--color-orange);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    cursor: pointer;
 }
 
 .demo-msg.user-msg {
@@ -1126,6 +1322,7 @@ a {
    ========================================================================== */
 
 @media (max-width: 900px) {
+    .hero-grid-container { grid-template-columns: 1fr; }
     .hero-title { font-size: 2.8rem; }
     .obsidian-grid { grid-template-columns: 1fr; }
     .nav-links { display: none; }

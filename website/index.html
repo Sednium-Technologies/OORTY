@@ -73,7 +73,7 @@
         <div class="nav-container">
             <a href="#" class="logo" aria-label="Sednium Oorty — Home">
                 <img src="assets/logo.jpg" alt="Sednium Oorty app icon" class="logo-img" width="36" height="36">
-                <span class="logo-text">Oorty <span class="logo-badge">v1.0</span></span>
+                <span class="logo-text">Oorty</span>
             </a>
             <div class="nav-links" id="navLinks">
                 <a href="#features" class="nav-link">Features</a>
@@ -99,15 +99,12 @@
     <!-- ========== Hero Section ========== -->
     <section class="hero" id="hero" aria-label="Sednium Oorty — Multi-Model AI Platform">
         <div class="hero-particles" id="particles" aria-hidden="true"></div>
-        <div class="container">
+        <div class="container hero-grid-container">
+            <!-- Left Column: Content & Actions -->
             <div class="hero-content">
-                <div class="hero-tag fade-in">
-                    <span class="pulse-dot"></span>
-                    <span>Native Android & Web • 100% Offline GGUF Support</span>
-                </div>
                 <h1 class="hero-title fade-in">
                     <span class="highlight">Sednium Oorty.</span><br>
-                    Local Intelligence.<br>Obsidian Knowledge.
+                    One Interface.<br>Every AI Model.
                 </h1>
                 <p class="hero-subtitle fade-in">
                     Run native quantized GGUF models directly on your phone with real-time token telemetry. Auto-save every conversation into an open Obsidian-compatible Markdown vault with YAML frontmatter, execute autonomous MCP tools, and orchestrate top cloud models seamlessly.
@@ -139,121 +136,121 @@
                 </div>
             </div>
 
-            <!-- ========== Interactive Live Demo Sandbox ========== -->
-            <div class="hero-visual fade-in" id="interactive-demo" aria-label="Interactive Oorty Demo Showcase">
-                <div class="demo-card">
-                    <div class="demo-tabs" role="tablist">
-                        <button class="demo-tab active" data-tab="gguf" role="tab" aria-selected="true">⚡ Local GGUF</button>
-                        <button class="demo-tab" data-tab="obsidian" role="tab" aria-selected="false">📓 Obsidian Vault</button>
-                        <button class="demo-tab" data-tab="mcp" role="tab" aria-selected="false">🛠️ MCP Agent</button>
-                        <button class="demo-tab" data-tab="cloud" role="tab" aria-selected="false">☁️ Cloud Router</button>
-                    </div>
-
-                    <!-- TAB 1: GGUF On-Device -->
-                    <div class="demo-view active" id="view-gguf">
-                        <div class="demo-header-bar">
-                            <div class="pill pill-green"><span class="dot-green"></span> GGUF Native Engine Active</div>
-                            <div class="stats-badge" id="gguf-stats">28.4 tok/s • 0.78s TTFT</div>
-                        </div>
-                        <div class="demo-chat-box">
-                            <div class="demo-msg user-msg">
-                                <span class="avatar">🧑</span>
-                                <div class="msg-bubble">Explain Kotlin StateFlow and emit updates</div>
+            <!-- Right Column: Interactive Phone Simulator -->
+            <div class="hero-visual fade-in" id="interactive-demo" aria-label="Interactive Phone Simulator">
+                <div class="phone-frame">
+                    <div class="phone-island"><span class="camera-lens"></span><span class="speaker-pill"></span></div>
+                    
+                    <div class="phone-screen">
+                        <!-- Phone System Status Bar -->
+                        <div class="phone-status-bar">
+                            <span class="phone-time">17:02</span>
+                            <div class="phone-status-icons">
+                                <span>5G</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.25c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l.64-.64C8.03 20.26 9.93 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/></svg>
+                                <span>100%</span>
                             </div>
-                            <div class="demo-msg bot-msg">
-                                <span class="avatar">🤖</span>
-                                <div class="msg-bubble code-bubble">
-                                    <div class="code-top">
-                                        <span>Qwen 2.5 (0.5B-Q4_K_M) • Memory: 420MB</span>
-                                        <span class="badge-safe">Comfortable 🟢</span>
-                                    </div>
-                                    <pre><code>val _state = MutableStateFlow&lt;ViewState&gt;(ViewState.Idle)
-val state: StateFlow&lt;ViewState&gt; = _state.asStateFlow()
+                        </div>
 
-fun update() = viewModelScope.launch {
-    _state.value = ViewState.Success(data)
-}</code></pre>
+                        <!-- In-Phone App Bar -->
+                        <div class="phone-app-bar">
+                            <div class="app-bar-left">
+                                <img src="assets/logo.jpg" alt="Logo" class="app-bar-avatar" width="22" height="22">
+                                <div class="app-bar-meta">
+                                    <span class="app-bar-title">Oorty</span>
+                                    <span class="app-bar-sub">LOCAL_GGUF • Quick</span>
+                                </div>
+                            </div>
+                            <div class="app-bar-pill">🟢 RAM: 420MB</div>
+                        </div>
+
+                        <!-- In-Phone Interactive Mode Tabs -->
+                        <div class="demo-tabs in-phone" role="tablist">
+                            <button class="demo-tab active" data-tab="gguf" role="tab" aria-selected="true">⚡ GGUF</button>
+                            <button class="demo-tab" data-tab="obsidian" role="tab" aria-selected="false">📓 Vault</button>
+                            <button class="demo-tab" data-tab="mcp" role="tab" aria-selected="false">🛠️ MCP</button>
+                            <button class="demo-tab" data-tab="cloud" role="tab" aria-selected="false">☁️ Cloud</button>
+                        </div>
+
+                        <!-- TAB 1: GGUF On-Device View -->
+                        <div class="demo-view active" id="view-gguf">
+                            <div class="phone-chat-scroll">
+                                <div class="demo-msg user-msg">
+                                    <div class="msg-bubble">Explain StateFlow in Kotlin Jetpack Compose</div>
+                                </div>
+                                <div class="demo-msg bot-msg">
+                                    <div class="msg-bubble code-bubble">
+                                        <div class="code-top">
+                                            <span>Qwen 2.5 (0.5B)</span>
+                                            <span class="badge-safe">28.4 tok/s</span>
+                                        </div>
+                                        <pre><code>val state by viewModel.uiState
+    .collectAsStateWithLifecycle()
+
+Text("Result: ${state.data}")</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="phone-telemetry-tag">
+                                <span>⚡ 0.78s TTFT • 420MB / Safe</span>
+                                <span class="vault-tick">Vault ✓</span>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: Obsidian Markdown Vault View -->
+                        <div class="demo-view" id="view-obsidian">
+                            <div class="phone-markdown-box">
+                                <pre><code class="lang-yaml"><span class="yaml-key">---</span>
+<span class="yaml-key">id:</span> <span class="yaml-val">"a1b2c3d4-e5f6"</span>
+<span class="yaml-key">title:</span> <span class="yaml-val">"StateFlow Compose"</span>
+<span class="yaml-key">model:</span> <span class="yaml-val">"Qwen2.5-0.5B"</span>
+<span class="yaml-key">tags:</span> <span class="yaml-val">["kotlin", "compose"]</span>
+<span class="yaml-key">---</span>
+
+<span class="md-h1"># StateFlow Compose</span>
+<span class="md-h2">## 🤖 Oorty — 17:02 | ~520 tok</span>
+StateFlow is an observable holder...</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: MCP Agent View -->
+                        <div class="demo-view" id="view-mcp">
+                            <div class="phone-terminal-box">
+                                <div class="term-line"><span class="term-prompt">$</span> <span class="term-cmd">mcp::recall_from_vault</span></div>
+                                <div class="term-line term-tool">query: "Room Database KSP"</div>
+                                <div class="term-line term-success">[SUCCESS] Score 0.892</div>
+                                <div class="term-line term-res">🤖 Injected 480 tokens into context.</div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: Cloud Router View -->
+                        <div class="demo-view" id="view-cloud">
+                            <div class="phone-cloud-grid">
+                                <div class="cloud-mini-card active">
+                                    <strong>Gemini 2.5 Flash</strong>
+                                    <span>Google AI Studio</span>
+                                </div>
+                                <div class="cloud-mini-card">
+                                    <strong>Claude 3.7 Sonnet</strong>
+                                    <span>Anthropic BYOK</span>
+                                </div>
+                                <div class="cloud-mini-card">
+                                    <strong>GPT-4o</strong>
+                                    <span>OpenAI Direct</span>
+                                </div>
+                                <div class="cloud-mini-card">
+                                    <strong>DeepSeek R1</strong>
+                                    <span>Groq 400 tok/s</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="demo-footer-telemetry">
-                            <div class="telemetry-item">
-                                <span class="telemetry-label">RAM Watchdog</span>
-                                <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width: 28%;"></div></div>
-                                <span class="telemetry-val">420MB / 2.8GB Free</span>
-                            </div>
-                            <div class="telemetry-item">
-                                <span class="telemetry-label">Agent Mode</span>
-                                <span class="badge-limited">⚡ Limited Agentic (&lt;3B)</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- TAB 2: Obsidian Markdown Vault -->
-                    <div class="demo-view" id="view-obsidian">
-                        <div class="demo-header-bar">
-                            <div class="pill pill-orange">📁 Documents/Oorty/chats/kotlin-flow.md</div>
-                            <div class="stats-badge">YAML Frontmatter ✓</div>
-                        </div>
-                        <div class="demo-markdown-viewer">
-                            <pre><code class="lang-yaml"><span class="yaml-key">---</span>
-<span class="yaml-key">id:</span> <span class="yaml-val">"a1b2c3d4-e5f6-7890"</span>
-<span class="yaml-key">title:</span> <span class="yaml-val">"Kotlin Flow Architecture"</span>
-<span class="yaml-key">created:</span> <span class="yaml-val">"2026-08-27T17:02:42+05:30"</span>
-<span class="yaml-key">model:</span> <span class="yaml-val">"Qwen2.5-0.5B-Instruct"</span>
-<span class="yaml-key">provider:</span> <span class="yaml-val">"LOCAL_GGUF"</span>
-<span class="yaml-key">total_tokens_est:</span> <span class="yaml-val">3420</span>
-<span class="yaml-key">tags:</span> <span class="yaml-val">["kotlin", "stateflow", "coroutines", "android"]</span>
-<span class="yaml-key">---</span>
-
-<span class="md-h1"># Kotlin Flow Architecture</span>
-
-<span class="md-h2">## 🧑 User — 17:02</span>
-Explain Kotlin StateFlow and emit updates
-
-<span class="md-h2">## 🤖 Oorty (Qwen2.5-0.5B) — 17:03 | ~520 tokens | 0.8s TTFT</span>
-StateFlow is a state-holder observable flow...</code></pre>
-                        </div>
-                    </div>
-
-                    <!-- TAB 3: MCP Agent -->
-                    <div class="demo-view" id="view-mcp">
-                        <div class="demo-header-bar">
-                            <div class="pill pill-blue">🤖 MCP Agentic Loop</div>
-                            <div class="stats-badge">ToolCallOrchestrator</div>
-                        </div>
-                        <div class="demo-terminal">
-                            <div class="term-line"><span class="term-prompt">$</span> <span class="term-cmd">oorty agent --run "Find Room DB discussions in vault"</span></div>
-                            <div class="term-line term-tool">[MCP Call] <span class="term-tool-name">builtin::recall_from_vault</span>(query: "Room Database")</div>
-                            <div class="term-line term-dim">→ Cosine similarity score: 0.892 (matches: "database-room-setup.md")</div>
-                            <div class="term-line term-success">[SUCCESS] Injected 480 tokens of relevant context into prompt memory.</div>
-                            <div class="term-line term-res">🤖 Oorty: "In your previous session from yesterday, you set up Room Database with KSP and @Database(version = 1)..."</div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 4: Cloud Router -->
-                    <div class="demo-view" id="view-cloud">
-                        <div class="demo-header-bar">
-                            <div class="pill pill-purple">🌐 Multi-Provider Cloud Router</div>
-                            <div class="stats-badge">BYOK • Zero Markup</div>
-                        </div>
-                        <div class="demo-cloud-grid">
-                            <div class="cloud-card active">
-                                <div class="cloud-title">Gemini 2.5 Flash</div>
-                                <div class="cloud-sub">Google AI Studio • 1M Context</div>
-                            </div>
-                            <div class="cloud-card">
-                                <div class="cloud-title">Claude 3.7 Sonnet</div>
-                                <div class="cloud-sub">Anthropic • Hybrid Thinking</div>
-                            </div>
-                            <div class="cloud-card">
-                                <div class="cloud-title">GPT-4o</div>
-                                <div class="cloud-sub">OpenAI • Vision & Coding</div>
-                            </div>
-                            <div class="cloud-card">
-                                <div class="cloud-title">DeepSeek R1</div>
-                                <div class="cloud-sub">Groq / OpenRouter • Reasoning</div>
-                            </div>
+                        <!-- In-Phone Message Composer -->
+                        <div class="phone-composer">
+                            <span class="composer-icon">📎</span>
+                            <div class="composer-input">Ask local model anything...</div>
+                            <span class="composer-mic">🎙️</span>
+                            <div class="composer-send">➤</div>
                         </div>
                     </div>
                 </div>
