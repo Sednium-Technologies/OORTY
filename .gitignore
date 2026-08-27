@@ -36,3 +36,17 @@ Oorty.md
 
 # Claude Code
 .claude/
+.agents/
+
+# Android Build
+.gradle/
+app/.gradle/
+app/app/.gradle/
+app/build/
+app/app/build/
+local.properties
+app/local.properties
+*.apk
+*.aab
+mods.zip
+mods/

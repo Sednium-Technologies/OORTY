@@ -1,0 +1,278 @@
+package oorty.sednium.app.ui.components
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import oorty.sednium.app.model.Attachment
+import oorty.sednium.app.model.AttachmentType
+import oorty.sednium.app.model.SavedModelPreset
+import oorty.sednium.app.ui.theme.SedRedAlpha
+import oorty.sednium.app.ui.theme.SedniumColors
+import oorty.sednium.app.ui.theme.SedniumRadii
+import oorty.sednium.app.ui.theme.SpinningIcon
+import oorty.sednium.app.ui.theme.popUpSpec
+
+/**
+ * Port of the pill-shaped composer at the bottom of App.tsx: attachment
+ * chips row, attach + preset-bookmark buttons, auto-growing text field,
+ * and a send button that morphs color depending on whether it's armed.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun MessageComposer(
+    input: String,
+    onInputChange: (String) -> Unit,
+    attachments: List<Attachment>,
+    onRemoveAttachment: (Int) -> Unit,
+    isLoading: Boolean,
+    isPresetMenuOpen: Boolean,
+    onTogglePresetMenu: () -> Unit,
+    presets: List<SavedModelPreset>,
+    activePresetId: String?,
+    onSelectPreset: (SavedModelPreset) -> Unit,
+    onAttachClick: () -> Unit,
+    isListening: Boolean = false,
+    onVoiceClick: () -> Unit = {},
+    onSend: () -> Unit
+) {
+    val canSend = (input.isNotBlank() || attachments.isNotEmpty()) && !isLoading
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SedniumColors.SedYellow, RoundedCornerShape(24.dp))
+            .border(1.dp, SedRedAlpha.a30, RoundedCornerShape(24.dp))
+            .padding(6.dp)
+    ) {
+        // --- Attachment chips ---
+        AnimatedVisibility(visible = attachments.isNotEmpty(), enter = fadeIn(), exit = fadeOut()) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                attachments.forEachIndexed { idx, att ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(SedniumRadii.sm))
+                            .background(SedRedAlpha.a10)
+                            .border(1.dp, SedRedAlpha.a20, RoundedCornerShape(SedniumRadii.sm))
+                            .padding(start = 8.dp, end = 28.dp, top = 6.dp, bottom = 6.dp)
+                    ) {
+                        Text(
+                            if (att.type == AttachmentType.IMAGE) "IMG" else att.name.substringAfterLast('.', "TXT").uppercase().take(4),
+                            style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = SedniumColors.SedRed
+                        )
+                        Text(att.name, style = MaterialTheme.typography.bodySmall, color = SedniumColors.SedRed, maxLines = 1)
+                        IconButton(onClick = { onRemoveAttachment(idx) }, modifier = Modifier.size(18.dp)) {
+                            Icon(Icons.Filled.Close, contentDescription = "Remove", tint = SedRedAlpha.a60, modifier = Modifier.size(12.dp))
+                        }
+                    }
+                }
+            }
+        }
+
+        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
+            IconButton(onClick = onAttachClick, enabled = !isLoading) {
+                Icon(Icons.Filled.AttachFile, contentDescription = "Attach", tint = SedniumColors.SedRed.copy(alpha = 0.7f))
+            }
+
+            Box {
+                IconButton(onClick = onTogglePresetMenu, enabled = !isLoading) {
+                    Icon(
+                        Icons.Filled.Bookmark,
+                        contentDescription = "Presets",
+                        tint = SedniumColors.SedRed.copy(alpha = if (isPresetMenuOpen) 1f else 0.7f)
+                    )
+                }
+                if (isPresetMenuOpen) {
+                    androidx.compose.ui.window.Popup(
+                        alignment = androidx.compose.ui.Alignment.BottomStart,
+                        offset = androidx.compose.ui.unit.IntOffset(0, -60),
+                        onDismissRequest = onTogglePresetMenu
+                    ) {
+                        PresetMenu(
+                            presets = presets,
+                            activePresetId = activePresetId,
+                            onSelect = onSelectPreset,
+                            onClose = onTogglePresetMenu
+                        )
+                    }
+                }
+            }
+
+            IconButton(onClick = onVoiceClick, enabled = !isLoading) {
+                Icon(
+                    if (isListening) Icons.Filled.Mic else Icons.Filled.MicOff,
+                    contentDescription = if (isListening) "Stop dictation" else "Voice input",
+                    tint = if (isListening) SedniumColors.SedRed else SedniumColors.SedRed.copy(alpha = 0.7f)
+                )
+            }
+
+            androidx.compose.foundation.text.BasicTextField(
+                value = input,
+                onValueChange = onInputChange,
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(max = 150.dp)
+                    .padding(top = 12.dp, bottom = 12.dp), // Adjust padding to center it
+                enabled = !isLoading,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = if (isLoading) SedniumColors.SedRed.copy(alpha = 0.5f) else SedniumColors.SedRed
+                ),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(SedniumColors.SedRed),
+                decorationBox = { innerTextField ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (input.isEmpty()) {
+                            Text(
+                                if (isListening) "Listening…" else "Message…",
+                                color = SedniumColors.SedRed.copy(alpha = 0.5f),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            )
+
+            Box(
+                modifier = Modifier
+                    .padding(4.dp)
+                    .clip(CircleShape)
+                    .background(if (canSend) SedniumColors.SedRed else SedRedAlpha.a10)
+                    .let { if (canSend) it else it } // shadow omitted for native simplicity
+                    .size(40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(onClick = onSend, enabled = canSend) {
+                    if (isLoading) {
+                        SpinningIcon(icon = Icons.Filled.Refresh, tint = SedniumColors.SedRed)
+                    } else {
+                        Icon(
+                            Icons.Filled.Send,
+                            contentDescription = "Send",
+                            tint = if (canSend) SedniumColors.SedYellow else SedRedAlpha.a40
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PresetMenu(
+    presets: List<SavedModelPreset>,
+    activePresetId: String?,
+    onSelect: (SavedModelPreset) -> Unit,
+    onClose: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .padding(bottom = 8.dp)
+            .clip(RoundedCornerShape(SedniumRadii.lg))
+            .background(SedniumColors.SedYellow)
+            .border(1.dp, SedRedAlpha.a20, RoundedCornerShape(SedniumRadii.lg))
+            .heightIn(max = 240.dp)
+            .padding(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "SAVED CONFIGURATIONS",
+                style = MaterialTheme.typography.labelSmall,
+                color = SedRedAlpha.a70
+            )
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Close",
+                    tint = SedRedAlpha.a70,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+        
+        if (presets.isEmpty()) {
+            Text(
+                "No saved configurations. Save presets from Settings > Behavior.",
+                style = MaterialTheme.typography.labelSmall,
+                color = SedRedAlpha.a70,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        } else {
+            presets.forEach { preset ->
+                val isActive = preset.id == activePresetId
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(SedniumRadii.sm))
+                        .background(if (isActive) SedRedAlpha.a10 else Color.Transparent)
+                        .clickable { onSelect(preset) }
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(preset.name, color = SedniumColors.SedRed, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+                        Text(preset.model, color = SedRedAlpha.a60, style = MaterialTheme.typography.labelSmall)
+                    }
+                    Text(
+                        preset.chatMode.name,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = SedniumColors.SedYellow,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(SedniumColors.SedRed)
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                    )
+                }
+            }
+        }
+    }
+}
