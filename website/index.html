@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en" dir="ltr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     <!-- Primary SEO Meta Tags -->
-    <title>Sednium Oorty — Multi-Model AI, On-Device GGUF Inference & Obsidian Vault</title>
-    <meta name="description" content="Sednium Oorty is a next-generation AI orchestrator for Android & Web. Run open-weights GGUF models on-device, store chats directly in an Obsidian-compatible Markdown vault, execute MCP agentic tools, and connect to 8+ cloud AI providers.">
-    <meta name="keywords" content="Oorty, Sednium, Local AI, GGUF Android, llama.cpp android, Obsidian AI vault, MCP tools, Model Context Protocol, LiteRT, Gemini 2.5, Claude 3.7 Sonnet, GPT-4o, Groq, Privacy AI, Android AI chat">
-    <meta name="author" content="Sednium">
+    <title>Sednium Oorty — On-Device GGUF Inference, Obsidian Vault & Multi-Model AI Orchestrator</title>
+    <meta name="description" content="Sednium Oorty is an open-weights on-device AI orchestrator for Android & Web. Run native quantized GGUF models offline via llama.cpp, auto-sync conversations into an Obsidian-ready Markdown vault, execute autonomous MCP tools, and connect to 8+ top cloud LLMs.">
+    <meta name="keywords" content="Oorty, Sednium, Local AI, GGUF Android, llama.cpp android, Obsidian AI vault, MCP tools, Model Context Protocol, LiteRT, Gemini 2.5, Claude 3.7 Sonnet, GPT-4o, Groq, Privacy AI, Android AI chat, HuggingFace GGUF">
+    <meta name="author" content="Sednium Technologies">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="https://oorty.sednium.com/">
 
@@ -17,7 +17,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://oorty.sednium.com/">
     <meta property="og:title" content="Sednium Oorty — Native On-Device GGUF & Multi-Model AI Orchestrator">
-    <meta property="og:description" content="Run native GGUF models offline on Android, auto-sync chats to Obsidian Markdown vaults, execute MCP tools, and connect to leading AI models.">
+    <meta property="og:description" content="Run native GGUF models offline on Android with real-time tok/s metrics, auto-sync chats to Obsidian Markdown vaults with YAML frontmatter, and execute MCP tools.">
     <meta property="og:image" content="https://oorty.sednium.com/assets/logo.jpg">
     <meta property="og:site_name" content="Sednium Oorty">
 
@@ -33,13 +33,13 @@
     <link rel="apple-touch-icon" href="assets/logo.jpg">
     <meta name="theme-color" content="#EC5E27">
 
-    <!-- Google Fonts: display=swap for high performance -->
+    <!-- Preconnect & Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 
-    <!-- JSON-LD Structured Data: SoftwareApplication -->
+    <!-- Structured Data -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -48,9 +48,10 @@
         "alternateName": "Oorty",
         "url": "https://oorty.sednium.com",
         "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Android, Web",
-        "description": "Sednium Oorty is a native multi-model AI platform featuring on-device GGUF execution, Obsidian markdown vault synchronization, MCP agentic tools, and multi-cloud AI orchestration.",
+        "operatingSystem": "Android 8.0+, Web",
+        "description": "Sednium Oorty is a native multi-model AI platform featuring on-device GGUF execution via llama.cpp, Obsidian markdown vault synchronization, MCP agentic tools, and multi-cloud AI orchestration.",
         "image": "https://oorty.sednium.com/assets/logo.jpg",
+        "softwareVersion": "1.0.0",
         "offers": {
             "@type": "Offer",
             "price": "0",
@@ -59,431 +60,1072 @@
         },
         "author": {
             "@type": "Organization",
-            "name": "Sednium",
+            "name": "Sednium Technologies",
             "url": "https://sednium.com"
         }
     }
     </script>
 </head>
 <body>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Accessibility Skip Link -->
     <a href="#hero" class="skip-link">Skip to main content</a>
 
-    <!-- ========== Navigation ========== -->
-    <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <!-- ========== Navigation Bar ========== -->
+    <nav id="navbar" class="navbar" role="navigation" aria-label="Main navigation">
         <div class="nav-container">
             <a href="#" class="logo" aria-label="Sednium Oorty — Home">
-                <img src="assets/logo.jpg" alt="Sednium Oorty app icon" class="logo-img" width="36" height="36">
-                <span class="logo-text">Oorty</span>
+                <div class="logo-wrapper">
+                    <img src="assets/logo.jpg" alt="Sednium Oorty logo" class="logo-img" width="38" height="38">
+                    <span class="logo-badge">v1.0</span>
+                </div>
+                <div class="logo-text-group">
+                    <span class="logo-text">Oorty</span>
+                    <span class="logo-sub">by Sednium</span>
+                </div>
             </a>
+
             <div class="nav-links" id="navLinks">
                 <a href="#features" class="nav-link">Features</a>
-                <a href="#local-models" class="nav-link">Local GGUF</a>
+                <a href="#prompt-lab" class="nav-link">Prompt Lab</a>
+                <a href="#hf-hub" class="nav-link">GGUF Hub</a>
+                <a href="#hardware-fit" class="nav-link">RAM Watchdog</a>
                 <a href="#obsidian-vault" class="nav-link">Obsidian Vault</a>
-                <a href="#hardware-fit" class="nav-link">RAM Calculator</a>
-                <a href="#mcp-tools" class="nav-link">MCP Agents</a>
+                <a href="#mcp-agents" class="nav-link">MCP Agents</a>
+                <a href="#code-arch" class="nav-link">Architecture</a>
                 <a href="#faq" class="nav-link">FAQ</a>
             </div>
+
             <div class="nav-actions">
-                <a href="https://github.com/AnkushDas4/OORTY" class="github-link" target="_blank" rel="noopener" aria-label="Sednium Oorty on GitHub" title="View Source on GitHub">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" class="btn-icon theme-toggle" aria-label="Toggle theme" title="Toggle Light/Dark Mode">
+                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+
+                <!-- GitHub Link -->
+                <a href="https://github.com/Sednium-Technologies/OORTY" class="btn-icon github-link" target="_blank" rel="noopener" aria-label="GitHub Repository" title="GitHub Repository">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
                 </a>
-                <a href="https://github.com/AnkushDas4/OORTY/releases/download/v1.0.0/oorty-app.apk" class="btn btn-primary nav-download-btn">Get APK (v1.0.0)</a>
+
+                <!-- Download Action -->
+                <a href="https://github.com/Sednium-Technologies/OORTY/releases/download/v1.0.0/oorty-app.apk" class="btn btn-primary nav-download-btn pulse-button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Get APK</span>
+                </a>
             </div>
-            <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
-                <span></span><span></span><span></span>
+
+            <!-- Hamburger Button for Mobile -->
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
             </button>
         </div>
     </nav>
 
-    <main>
-    <!-- ========== Hero Section ========== -->
-    <section class="hero" id="hero" aria-label="Sednium Oorty — Multi-Model AI Platform">
-        <div class="hero-particles" id="particles" aria-hidden="true"></div>
-        <div class="container hero-grid-container">
-            <!-- Left Column: Content & Actions -->
-            <div class="hero-content">
-                <h1 class="hero-title fade-in">
-                    <span class="highlight">Sednium Oorty.</span><br>
-                    One Interface.<br>Every AI Model.
-                </h1>
-                <p class="hero-subtitle fade-in">
-                    Run native quantized GGUF models directly on your phone with real-time token telemetry. Auto-save every conversation into an open Obsidian-compatible Markdown vault with YAML frontmatter, execute autonomous MCP tools, and orchestrate top cloud models seamlessly.
-                </p>
-                <div class="hero-actions fade-in" id="download">
-                    <a href="https://github.com/AnkushDas4/OORTY/releases/download/v1.0.0/oorty-app.apk" class="btn btn-large btn-primary">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Download APK (v1.0.0 • 89 MB)
-                    </a>
-                    <a href="https://github.com/AnkushDas4/OORTY/releases/tag/v1.0.0" class="btn btn-large btn-outline" target="_blank" rel="noopener">GitHub Releases</a>
+    <!-- Mobile Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <div class="mobile-drawer-content">
+            <div class="drawer-header">
+                <div class="logo">
+                    <img src="assets/logo.jpg" alt="Logo" class="logo-img" width="32" height="32">
+                    <span class="logo-text">Oorty</span>
                 </div>
-                <div class="hero-stats fade-in">
-                    <div class="stat">
-                        <span class="stat-number">100%</span>
-                        <span class="stat-label">Offline GGUF</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">384-D</span>
-                        <span class="stat-label">Vector Recall</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">8+</span>
-                        <span class="stat-label">Cloud AI Providers</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">.md</span>
-                        <span class="stat-label">Obsidian Vault</span>
-                    </div>
-                </div>
+                <button class="drawer-close" id="drawerClose" aria-label="Close menu">&times;</button>
             </div>
+            <div class="drawer-links">
+                <a href="#features" class="drawer-link">Features</a>
+                <a href="#prompt-lab" class="drawer-link">Prompt Lab</a>
+                <a href="#hf-hub" class="drawer-link">GGUF Hub</a>
+                <a href="#hardware-fit" class="drawer-link">RAM Watchdog</a>
+                <a href="#obsidian-vault" class="drawer-link">Obsidian Vault</a>
+                <a href="#mcp-agents" class="drawer-link">MCP Agents</a>
+                <a href="#code-arch" class="drawer-link">Architecture</a>
+                <a href="#faq" class="drawer-link">FAQ</a>
+            </div>
+            <div class="drawer-footer">
+                <a href="https://github.com/Sednium-Technologies/OORTY/releases/download/v1.0.0/oorty-app.apk" class="btn btn-primary btn-block">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download APK (v1.0.0)
+                </a>
+            </div>
+        </div>
+    </div>
 
-            <!-- Right Column: Interactive Phone Simulator -->
-            <div class="hero-visual fade-in" id="interactive-demo" aria-label="Interactive Phone Simulator">
-                <div class="phone-frame">
-                    <div class="phone-island"><span class="camera-lens"></span><span class="speaker-pill"></span></div>
-                    
-                    <div class="phone-screen">
-                        <!-- Phone System Status Bar -->
-                        <div class="phone-status-bar">
-                            <span class="phone-time">17:02</span>
-                            <div class="phone-status-icons">
-                                <span>5G</span>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.25c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l.64-.64C8.03 20.26 9.93 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/></svg>
-                                <span>100%</span>
+    <main id="main-content">
+        <!-- ========== Hero Section ========== -->
+        <section class="hero" id="hero" aria-label="Sednium Oorty Introduction">
+            <div class="hero-glow hero-glow-1"></div>
+            <div class="hero-glow hero-glow-2"></div>
+            <div class="container hero-grid">
+                <!-- Hero Left: Pitch & CTAs -->
+                <div class="hero-content">
+                    <div class="hero-badge fade-in">
+                        <span class="badge-dot"></span>
+                        <span class="badge-text">v1.0.0 Native Android + Jetpack Compose Release</span>
+                        <span class="badge-arrow">→</span>
+                    </div>
+
+                    <h1 class="hero-title fade-in">
+                        One Interface.<br>
+                        <span class="gradient-text">Every AI Model.</span><br>
+                        Zero Data Lock-In.
+                    </h1>
+
+                    <p class="hero-subtitle fade-in">
+                        Execute open-weights <strong>GGUF models on-device</strong> with real-time tokens/sec telemetry, auto-sync conversations into an open <strong>Obsidian Markdown vault</strong> with YAML frontmatter, run autonomous <strong>MCP tool loops</strong>, and orchestrate 8+ cloud providers seamlessly.
+                    </p>
+
+                    <div class="hero-actions fade-in">
+                        <a href="https://github.com/Sednium-Technologies/OORTY/releases/download/v1.0.0/oorty-app.apk" class="btn btn-primary btn-lg shine-effect">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <div>
+                                <span class="btn-label-main">Download APK (v1.0.0)</span>
+                                <span class="btn-label-sub">Android 8.0+ • ~89 MB • No Root Required</span>
                             </div>
+                        </a>
+                        <a href="#prompt-lab" class="btn btn-outline btn-lg">
+                            <span>Explore Interactive Demo</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Telemetry Stats Strip -->
+                    <div class="hero-stats-grid fade-in">
+                        <div class="stat-card">
+                            <div class="stat-value"><span class="counter" data-target="100">100</span>%</div>
+                            <div class="stat-desc">Offline GGUF Inference</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">384<span class="stat-unit">D</span></div>
+                            <div class="stat-desc">Vector Memory Recall</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">&lt;<span class="counter" data-target="10">10</span><span class="stat-unit">ms</span></div>
+                            <div class="stat-desc">LiteRT Title Generation</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">.md</div>
+                            <div class="stat-desc">Obsidian Vault Dual-Write</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Right: Hyper-Realistic Interactive In-Phone Simulator -->
+                <div class="hero-phone-wrap fade-in">
+                    <div class="phone-device" id="interactive-phone">
+                        <!-- Dynamic Island & Camera -->
+                        <div class="device-notch">
+                            <span class="camera-lens"></span>
+                            <span class="sensor-pill"></span>
                         </div>
 
-                        <!-- In-Phone App Bar -->
-                        <div class="phone-app-bar">
-                            <div class="app-bar-left">
-                                <img src="assets/logo.jpg" alt="Logo" class="app-bar-avatar" width="22" height="22">
-                                <div class="app-bar-meta">
-                                    <span class="app-bar-title">Oorty</span>
-                                    <span class="app-bar-sub">LOCAL_GGUF • Quick</span>
+                        <!-- Screen Surface -->
+                        <div class="device-screen">
+                            <!-- Top Status Bar -->
+                            <div class="screen-status-bar">
+                                <span class="status-time" id="deviceClock">17:02</span>
+                                <div class="status-icons">
+                                    <span class="signal-badge">5G</span>
+                                    <svg class="wifi-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.25c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l.64-.64C8.03 20.26 9.93 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/></svg>
+                                    <span class="battery-pill">100%</span>
                                 </div>
                             </div>
-                            <div class="app-bar-pill">🟢 RAM: 420MB</div>
-                        </div>
 
-                        <!-- In-Phone Interactive Mode Tabs -->
-                        <div class="demo-tabs in-phone" role="tablist">
-                            <button class="demo-tab active" data-tab="gguf" role="tab" aria-selected="true">⚡ GGUF</button>
-                            <button class="demo-tab" data-tab="obsidian" role="tab" aria-selected="false">📓 Vault</button>
-                            <button class="demo-tab" data-tab="mcp" role="tab" aria-selected="false">🛠️ MCP</button>
-                            <button class="demo-tab" data-tab="cloud" role="tab" aria-selected="false">☁️ Cloud</button>
-                        </div>
-
-                        <!-- TAB 1: GGUF On-Device View -->
-                        <div class="demo-view active" id="view-gguf">
-                            <div class="phone-chat-scroll">
-                                <div class="demo-msg user-msg">
-                                    <div class="msg-bubble">Explain StateFlow in Kotlin Jetpack Compose</div>
+                            <!-- App TopBar -->
+                            <div class="screen-app-bar">
+                                <div class="app-bar-user">
+                                    <img src="assets/logo.jpg" alt="App Icon" class="app-bar-img" width="26" height="26">
+                                    <div class="app-bar-info">
+                                        <span class="app-bar-name">Oorty Mobile</span>
+                                        <span class="app-bar-status" id="phoneStatusLabel">LOCAL_GGUF • Quick Mode</span>
+                                    </div>
                                 </div>
-                                <div class="demo-msg bot-msg">
-                                    <div class="msg-bubble code-bubble">
-                                        <div class="code-top">
-                                            <span>Qwen 2.5 (0.5B)</span>
-                                            <span class="badge-safe">28.4 tok/s</span>
+                                <div class="app-bar-ram-tag" id="phoneRamTag">
+                                    <span class="ram-dot"></span>
+                                    <span>420MB / Safe</span>
+                                </div>
+                            </div>
+
+                            <!-- Interactive Mode Segmented Tabs -->
+                            <div class="phone-mode-tabs" role="tablist" aria-label="Interactive Simulator Modes">
+                                <button class="mode-tab-btn active" data-mode="gguf" role="tab" aria-selected="true">⚡ GGUF</button>
+                                <button class="mode-tab-btn" data-mode="thinking" role="tab" aria-selected="false">🧠 Thinking</button>
+                                <button class="mode-tab-btn" data-mode="vault" role="tab" aria-selected="false">📓 Vault</button>
+                                <button class="mode-tab-btn" data-mode="mcp" role="tab" aria-selected="false">🛠️ MCP</button>
+                                <button class="mode-tab-btn" data-mode="cloud" role="tab" aria-selected="false">☁️ Cloud</button>
+                            </div>
+
+                            <!-- Phone Screen Views Container -->
+                            <div class="phone-views-viewport">
+                                <!-- VIEW 1: GGUF On-Device Streaming -->
+                                <div class="phone-view active" id="view-gguf">
+                                    <div class="chat-messages-container">
+                                        <div class="chat-message-bubble user-bubble">
+                                            <p>How do I implement a state-hoisted Compose counter with Flow?</p>
+                                            <span class="bubble-time">17:02</span>
                                         </div>
-                                        <pre><code>val state by viewModel.uiState
-    .collectAsStateWithLifecycle()
 
-Text("Result: ${state.data}")</code></pre>
+                                        <div class="chat-message-bubble bot-bubble">
+                                            <div class="bot-header">
+                                                <span class="model-badge">Qwen 2.5 (0.5B-Instruct)</span>
+                                                <span class="telemetry-pill">28.4 tok/s • 0.72s TTFT</span>
+                                            </div>
+                                            <div class="code-snippet-box">
+                                                <div class="snippet-header">
+                                                    <span>Counter.kt</span>
+                                                    <button class="btn-copy-code" data-copy="val count by viewModel.counter.collectAsStateWithLifecycle()">Copy</button>
+                                                </div>
+                                                <pre><code>@Composable
+fun CounterScreen(viewModel: CounterViewModel) {
+    val count by viewModel.counter.collectAsStateWithLifecycle()
+    Button(onClick = { viewModel.increment() }) {
+        Text("Count: $count")
+    }
+}</code></pre>
+                                            </div>
+                                            <div class="bot-footer">
+                                                <span class="vault-sync-tag">✓ Synced to Documents/Oorty/chats/</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- VIEW 2: Thinking Mode with Collapsible Reasoning -->
+                                <div class="phone-view" id="view-thinking">
+                                    <div class="chat-messages-container">
+                                        <div class="chat-message-bubble user-bubble">
+                                            <p>Is binary search O(1) space complexity?</p>
+                                        </div>
+                                        <div class="chat-message-bubble bot-bubble">
+                                            <details class="thought-accordion" open>
+                                                <summary class="thought-summary">
+                                                    <span class="thought-icon">💡</span>
+                                                    <span>Thought Process (Parsed via StreamingThoughtParser in 420ms)</span>
+                                                </summary>
+                                                <div class="thought-body">
+                                                    1. Iterative binary search uses pointers (low, high, mid) requiring O(1) auxiliary memory.<br>
+                                                    2. Recursive binary search adds O(log n) stack frames unless tail-call optimized.
+                                                </div>
+                                            </details>
+                                            <div class="bot-markdown-content">
+                                                <p><strong>Yes</strong>, an <em>iterative</em> binary search uses strictly <code>O(1)</code> auxiliary space since it only tracks two indices.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- VIEW 3: Obsidian Vault Dual-Write -->
+                                <div class="phone-view" id="view-vault">
+                                    <div class="vault-split-preview">
+                                        <div class="vault-tab-header">
+                                            <span class="vault-filename">📄 kotlin-compose-counter.md</span>
+                                            <span class="vault-tag-pill">Obsidian Ready</span>
+                                        </div>
+                                        <div class="vault-code-wrap">
+                                            <pre><code class="language-yaml">---
+id: "b7e2-4190-a92c"
+title: "Kotlin Compose Counter"
+created: "2026-08-29T17:02:42"
+model: "Qwen2.5-0.5B-Instruct"
+provider: "LOCAL_GGUF"
+total_tokens_est: 480
+tags: ["#compose", "#stateflow", "#kotlin"]
+---
+
+# Kotlin Compose Counter
+## 🧑 User — 17:02
+How do I implement a state-hoisted Compose counter?
+
+## 🤖 Oorty (Qwen2.5-0.5B) — 17:03 | 28.4 tok/s
+Use `collectAsStateWithLifecycle()`...</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- VIEW 4: MCP Autonomous Agent Execution -->
+                                <div class="phone-view" id="view-mcp">
+                                    <div class="mcp-terminal-container">
+                                        <div class="mcp-term-top">
+                                            <span class="term-dot red"></span>
+                                            <span class="term-dot yellow"></span>
+                                            <span class="term-dot green"></span>
+                                            <span class="term-title">ToolCallOrchestrator (MCP Client)</span>
+                                        </div>
+                                        <div class="mcp-term-logs">
+                                            <div class="term-row"><span class="prompt-sym">&gt;</span> AI decided to execute MCP tool: <span class="hl-tool">vault_recall</span></div>
+                                            <div class="term-row"><span class="prompt-param">args:</span> <code>{"query": "Compose Jetpack Architecture"}</code></div>
+                                            <div class="term-row term-success"><span class="prompt-res">✓</span> 384-D Vector Index Match: <strong>0.92 Cosine Score</strong></div>
+                                            <div class="term-row"><span class="prompt-sym">&gt;</span> Injected 3 relevant past notes into local system context buffer.</div>
+                                            <div class="term-row term-blink">⚡ Generating final grounded response...</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- VIEW 5: Multi-Cloud Providers -->
+                                <div class="phone-view" id="view-cloud">
+                                    <div class="cloud-model-picker">
+                                        <div class="cloud-picker-header">Active Cloud Providers (BYOK)</div>
+                                        <div class="cloud-card-grid">
+                                            <div class="cloud-mini-item active">
+                                                <div class="provider-logo-tag">🔵 Google</div>
+                                                <div class="provider-model-title">Gemini 2.5 Flash</div>
+                                                <div class="provider-sub">1M Context • Flash Thinking</div>
+                                            </div>
+                                            <div class="cloud-mini-item">
+                                                <div class="provider-logo-tag">🟣 Anthropic</div>
+                                                <div class="provider-model-title">Claude 3.7 Sonnet</div>
+                                                <div class="provider-sub">Hybrid Reasoning • Code</div>
+                                            </div>
+                                            <div class="cloud-mini-item">
+                                                <div class="provider-logo-tag">⚡ Groq</div>
+                                                <div class="provider-model-title">Llama 3.3 70B</div>
+                                                <div class="provider-sub">400+ tok/s Ultra Low TTFT</div>
+                                            </div>
+                                            <div class="cloud-mini-item">
+                                                <div class="provider-logo-tag">🟢 NVIDIA</div>
+                                                <div class="provider-model-title">Nemotron 70B</div>
+                                                <div class="provider-sub">NVIDIA NIM Cloud Endpoints</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="phone-telemetry-tag">
-                                <span>⚡ 0.78s TTFT • 420MB / Safe</span>
-                                <span class="vault-tick">Vault ✓</span>
+
+                            <!-- Phone Bottom Message Composer Input Bar -->
+                            <div class="phone-composer-bar">
+                                <button class="composer-btn-attach" aria-label="Add attachment">+</button>
+                                <div class="composer-fake-input" id="phoneInputPlaceholder">Ask local model anything...</div>
+                                <button class="composer-btn-send" id="phoneSendBtn" aria-label="Send message">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== Supported Ecosystem Ribbon ========== -->
+        <section class="ecosystem-strip" aria-label="Supported Ecosystems">
+            <div class="container">
+                <p class="strip-heading">UNIFYING NATIVE ON-DEVICE HARDWARE &amp; CLOUD FRONTIER MODELS</p>
+                <div class="strip-items-marquee">
+                    <div class="marquee-track">
+                        <div class="eco-pill">⚡ llama.cpp GGUF Engine</div>
+                        <div class="eco-pill">📱 Google LiteRT (TensorFlow Lite)</div>
+                        <div class="eco-pill">📓 Obsidian Markdown Vault</div>
+                        <div class="eco-pill">🛠️ Model Context Protocol (MCP)</div>
+                        <div class="eco-pill">🔵 Gemini 2.5 Flash / Pro</div>
+                        <div class="eco-pill">🟣 Claude 3.7 Sonnet</div>
+                        <div class="eco-pill">🟢 OpenAI GPT-4o &amp; o3-mini</div>
+                        <div class="eco-pill">⚡ Groq LPU Inference</div>
+                        <div class="eco-pill">🌌 OpenRouter 200+ Models</div>
+                        <div class="eco-pill">🟢 NVIDIA NIM Microservices</div>
+                        <div class="eco-pill">🛡️ Sednium Rosette Gateway</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== Interactive Prompt Lab Section (From PromptLabScreen.kt) ========== -->
+        <section class="section prompt-lab-section" id="prompt-lab" aria-label="Prompt Lab Studio">
+            <div class="container">
+                <div class="section-header text-center fade-in">
+                    <span class="badge-sub">RAPID PRODUCTIVITY STUDIO</span>
+                    <h2 class="section-title">Interactive Prompt Lab</h2>
+                    <p class="section-desc">Single-turn precision tools implemented in <code>PromptLabScreen.kt</code>. Test real on-device transformations right here in your browser.</p>
+                </div>
+
+                <div class="prompt-lab-studio fade-in">
+                    <!-- Tool Selectors -->
+                    <div class="lab-tool-selector" role="tablist">
+                        <button class="lab-tab active" data-tool="summarize">
+                            <span class="lab-tab-icon">📝</span>
+                            <div class="lab-tab-text">
+                                <strong>Summarize</strong>
+                                <span>Key takeaway extraction</span>
+                            </div>
+                        </button>
+                        <button class="lab-tab" data-tool="improve">
+                            <span class="lab-tab-icon">✍️</span>
+                            <div class="lab-tab-text">
+                                <strong>Improve Writing</strong>
+                                <span>Clarity, flow &amp; impact</span>
+                            </div>
+                        </button>
+                        <button class="lab-tab" data-tool="explain">
+                            <span class="lab-tab-icon">💻</span>
+                            <div class="lab-tab-text">
+                                <strong>Explain Code</strong>
+                                <span>Deep architectural analysis</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Input / Output Grid -->
+                    <div class="lab-workspace-grid">
+                        <div class="lab-panel lab-input-panel">
+                            <div class="panel-header">
+                                <span class="panel-title">Input Text / Code</span>
+                                <button class="btn-sm btn-ghost" id="labSampleBtn">Load Sample</button>
+                            </div>
+                            <textarea id="labInputText" class="lab-textarea" placeholder="Paste your text or code here..."></textarea>
+                            <div class="panel-footer">
+                                <span class="char-counter" id="labCharCounter">0 characters</span>
+                                <button class="btn btn-primary btn-sm" id="labExecuteBtn">
+                                    <span>Run Transformation</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                </button>
                             </div>
                         </div>
 
-                        <!-- TAB 2: Obsidian Markdown Vault View -->
-                        <div class="demo-view" id="view-obsidian">
-                            <div class="phone-markdown-box">
-                                <pre><code class="lang-yaml"><span class="yaml-key">---</span>
-<span class="yaml-key">id:</span> <span class="yaml-val">"a1b2c3d4-e5f6"</span>
-<span class="yaml-key">title:</span> <span class="yaml-val">"StateFlow Compose"</span>
-<span class="yaml-key">model:</span> <span class="yaml-val">"Qwen2.5-0.5B"</span>
-<span class="yaml-key">tags:</span> <span class="yaml-val">["kotlin", "compose"]</span>
-<span class="yaml-key">---</span>
+                        <div class="lab-panel lab-output-panel">
+                            <div class="panel-header">
+                                <span class="panel-title">AI Output &amp; Telemetry</span>
+                                <button class="btn-sm btn-ghost" id="labCopyOutputBtn">Copy Output</button>
+                            </div>
+                            <div class="lab-output-display" id="labOutputArea">
+                                <div class="output-placeholder">
+                                    <span class="pulse-icon">✨</span>
+                                    <p>Select a tool and click "Run Transformation" to view the generated output.</p>
+                                </div>
+                            </div>
+                            <div class="panel-footer lab-telemetry-footer">
+                                <span class="telemetry-tag" id="labTelemetryTag">⚡ Mode: LOCAL_GGUF • Temperature: 0.7</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-<span class="md-h1"># StateFlow Compose</span>
-<span class="md-h2">## 🤖 Oorty — 17:02 | ~520 tok</span>
-StateFlow is an observable holder...</code></pre>
+        <!-- ========== HuggingFace GGUF Hub & Model Browser Section ========== -->
+        <section class="section hf-hub-section" id="hf-hub" aria-label="HuggingFace GGUF Hub">
+            <div class="container">
+                <div class="section-header text-center fade-in">
+                    <span class="badge-sub">ON-DEVICE MODEL REPOSITORY</span>
+                    <h2 class="section-title">Built-In HuggingFace GGUF Hub</h2>
+                    <p class="section-desc">Search, inspect and stream-download quantized GGUF weights directly into <code>Documents/Oorty/models/</code> with live download speed telemetry.</p>
+                </div>
+
+                <div class="hf-hub-showcase fade-in">
+                    <div class="hf-models-grid">
+                        <!-- Model Card 1: Qwen 2.5 -->
+                        <div class="hf-card" data-repo="Qwen/Qwen2.5-0.5B-Instruct-GGUF" data-size="398 MB" data-ram="4GB+ RAM">
+                            <div class="hf-card-top">
+                                <span class="hf-tag tag-ultralight">Ultra-Light</span>
+                                <span class="hf-size">398 MB</span>
+                            </div>
+                            <h3 class="hf-name">Qwen 2.5 (0.5B-Instruct)</h3>
+                            <p class="hf-desc">Smallest high-efficiency model. Ideal for 4GB RAM phones. Highest generation speed (35+ tok/s).</p>
+                            <div class="hf-spec-row">
+                                <span>Quant: Q4_K_M</span>
+                                <span>Context: 2,048</span>
+                            </div>
+                            <button class="btn btn-outline btn-sm btn-block btn-download-model" data-model="Qwen2.5-0.5B-Instruct-Q4_K_M.gguf">
+                                <span>Download to Oorty</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Model Card 2: Llama 3.2 -->
+                        <div class="hf-card featured" data-repo="bartowski/Llama-3.2-1B-Instruct-GGUF" data-size="780 MB" data-ram="6GB+ RAM">
+                            <div class="hf-badge-popular">★ Recommended</div>
+                            <div class="hf-card-top">
+                                <span class="hf-tag tag-balanced">Balanced</span>
+                                <span class="hf-size">780 MB</span>
+                            </div>
+                            <h3 class="hf-name">Llama 3.2 (1B-Instruct)</h3>
+                            <p class="hf-desc">The sweet spot for mobile instruction following, coding snippets, and concise explanations.</p>
+                            <div class="hf-spec-row">
+                                <span>Quant: Q4_K_M</span>
+                                <span>Context: 4,096</span>
+                            </div>
+                            <button class="btn btn-primary btn-sm btn-block btn-download-model" data-model="Llama-3.2-1B-Instruct-Q4_K_M.gguf">
+                                <span>Download to Oorty</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Model Card 3: Gemma 2 -->
+                        <div class="hf-card" data-repo="google/gemma-2-2b-it-GGUF" data-size="1.6 GB" data-ram="8GB+ RAM">
+                            <div class="hf-card-top">
+                                <span class="hf-tag tag-power">Reasoning</span>
+                                <span class="hf-size">1.6 GB</span>
+                            </div>
+                            <h3 class="hf-name">Gemma 2 (2B-IT)</h3>
+                            <p class="hf-desc">Google's powerhouse compact architecture with superior knowledge synthesis and mathematical reasoning.</p>
+                            <div class="hf-spec-row">
+                                <span>Quant: Q4_K_M</span>
+                                <span>Context: 4,096</span>
+                            </div>
+                            <button class="btn btn-outline btn-sm btn-block btn-download-model" data-model="gemma-2-2b-it-Q4_K_M.gguf">
+                                <span>Download to Oorty</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Model Card 4: Phi-3 Mini -->
+                        <div class="hf-card" data-repo="microsoft/Phi-3-mini-4k-instruct-gguf" data-size="2.3 GB" data-ram="12GB+ RAM">
+                            <div class="hf-card-top">
+                                <span class="hf-tag tag-autonomous">Autonomous MCP</span>
+                                <span class="hf-size">2.3 GB</span>
+                            </div>
+                            <h3 class="hf-name">Phi-3-Mini (3.8B-4k)</h3>
+                            <p class="hf-desc">Full agentic tool calling support with high JSON parsing reliability and deep multi-turn context retention.</p>
+                            <div class="hf-spec-row">
+                                <span>Quant: Q4_K_M</span>
+                                <span>Context: 4,096</span>
+                            </div>
+                            <button class="btn btn-outline btn-sm btn-block btn-download-model" data-model="Phi-3-mini-4k-instruct-Q4_K_M.gguf">
+                                <span>Download to Oorty</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Download Simulator Widget -->
+                    <div class="download-simulation-card" id="downloadSimulationCard">
+                        <div class="sim-header">
+                            <span class="sim-title">⚡ In-App HuggingFace Download Pipeline (`HuggingFaceApi.kt`)</span>
+                            <span class="sim-status" id="simStatus">Ready</span>
+                        </div>
+                        <div class="sim-body">
+                            <div class="sim-meta-row">
+                                <span id="simModelName">Llama-3.2-1B-Instruct-Q4_K_M.gguf</span>
+                                <span id="simSpeed">0 MB/s</span>
+                            </div>
+                            <div class="sim-progress-bar-wrap">
+                                <div class="sim-progress-bar" id="simProgressBar"></div>
+                            </div>
+                            <div class="sim-footer-row">
+                                <span id="simFraction">Target: Documents/Oorty/models/</span>
+                                <span id="simPercent">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== Dynamic RAM Watchdog & Calculator ========== -->
+        <section class="section ram-section" id="hardware-fit" aria-label="Dynamic Hardware RAM Calculator">
+            <div class="container">
+                <div class="section-header text-center fade-in">
+                    <span class="badge-sub">HARDWARE SAFETY</span>
+                    <h2 class="section-title">Dynamic RAM Watchdog &amp; Fit Matrix</h2>
+                    <p class="section-desc">Implemented with <code>ActivityManager.MemoryInfo</code> in <code>HardwareChecker.kt</code>. Never worry about Out-Of-Memory system crashes.</p>
+                </div>
+
+                <div class="ram-calculator-box fade-in">
+                    <!-- Selector -->
+                    <div class="ram-selector-bar" role="group" aria-label="Device RAM selector">
+                        <button class="ram-btn" data-ram="4">4 GB RAM</button>
+                        <button class="ram-btn active" data-ram="6">6 GB RAM</button>
+                        <button class="ram-btn" data-ram="8">8 GB RAM</button>
+                        <button class="ram-btn" data-ram="12">12 GB+ RAM</button>
+                    </div>
+
+                    <!-- Dynamic Card Output -->
+                    <div class="ram-display-card" id="ramCalcCard">
+                        <div class="ram-card-header">
+                            <div>
+                                <h3 class="ram-title" id="calcModelTitle">Llama 3.2 (1B-Instruct)</h3>
+                                <span class="ram-quant-tag" id="calcQuantTag">Quant: Q4_K_M • ~850 MB VRAM</span>
+                            </div>
+                            <div class="ram-safety-badge badge-safe" id="calcSafetyBadge">
+                                <span class="badge-icon">🟢</span>
+                                <span id="calcSafetyText">Comfortable Fit</span>
                             </div>
                         </div>
 
-                        <!-- TAB 3: MCP Agent View -->
-                        <div class="demo-view" id="view-mcp">
-                            <div class="phone-terminal-box">
-                                <div class="term-line"><span class="term-prompt">$</span> <span class="term-cmd">mcp::recall_from_vault</span></div>
-                                <div class="term-line term-tool">query: "Room Database KSP"</div>
-                                <div class="term-line term-success">[SUCCESS] Score 0.892</div>
-                                <div class="term-line term-res">🤖 Injected 480 tokens into context.</div>
+                        <p class="ram-explanation" id="calcExplanation">
+                            Optimal choice for 6GB devices. Delivers 25–35 tok/s decode speed with fast responses and low battery consumption. Leaves ample RAM for Android OS.
+                        </p>
+
+                        <!-- RAM Gauge Visualizer -->
+                        <div class="ram-gauge-container">
+                            <div class="gauge-labels">
+                                <span>Estimated VRAM Usage</span>
+                                <span id="calcGaugeVal">~850 MB / 6,144 MB (13.8%)</span>
+                            </div>
+                            <div class="gauge-bar-track">
+                                <div class="gauge-bar-fill fill-green" id="calcGaugeFill" style="width: 14%;"></div>
                             </div>
                         </div>
 
-                        <!-- TAB 4: Cloud Router View -->
-                        <div class="demo-view" id="view-cloud">
-                            <div class="phone-cloud-grid">
-                                <div class="cloud-mini-card active">
-                                    <strong>Gemini 2.5 Flash</strong>
-                                    <span>Google AI Studio</span>
+                        <!-- Specs Grid -->
+                        <div class="ram-metrics-grid">
+                            <div class="metric-card">
+                                <span class="metric-label">Estimated Speed</span>
+                                <strong class="metric-value" id="calcSpeedVal">~30 tok/s</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Safe Context Window</span>
+                                <strong class="metric-value" id="calcContextVal">4,096 Tokens</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Tool Calling Power</span>
+                                <strong class="metric-value" id="calcAgenticVal">⚡ Limited (Fast)</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Memory Crash Risk</span>
+                                <strong class="metric-value text-green" id="calcRiskVal">Zero (Safe)</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== Core Features Matrix ========== -->
+        <section class="section features-section" id="features" aria-label="Core Features">
+            <div class="container">
+                <div class="section-header text-center fade-in">
+                    <span class="badge-sub">COMPREHENSIVE CAPABILITIES</span>
+                    <h2 class="section-title">Engineered for Engineers &amp; Writers</h2>
+                    <p class="section-desc">From offline neural weights to Obsidian graph connections, explore everything Oorty delivers.</p>
+                </div>
+
+                <div class="features-card-grid fade-in">
+                    <article class="feat-card">
+                        <div class="feat-icon-box">⚡</div>
+                        <h3>On-Device llama.cpp Runtime</h3>
+                        <p>Zero internet dependency. Run Qwen 2.5, Llama 3.2, Gemma 2, and Phi-3 models with native token-by-token Coroutine Flow streaming.</p>
+                    </article>
+
+                    <article class="feat-card">
+                        <div class="feat-icon-box">📓</div>
+                        <h3>Obsidian Vault Dual-Write</h3>
+                        <p>Automatically records chats as standard Markdown notes into <code>Documents/Oorty/chats/</code> with YAML frontmatter, headers, and topic tags.</p>
+                    </article>
+
+                    <article class="feat-card">
+                        <div class="feat-icon-box">🧠</div>
+                        <h3>384-D Semantic Memory</h3>
+                        <p>Unit-normalized subword n-gram vector embeddings compute cosine similarity to inject past discussions passively into fresh prompts.</p>
+                    </article>
+
+                    <article class="feat-card">
+                        <div class="feat-icon-box">🛡️</div>
+                        <h3>Dynamic RAM Watchdog</h3>
+                        <p>Real-time memory checks via <code>ActivityManager.MemoryInfo</code> prevent Android Linux OOM freezes before loading neural weights.</p>
+                    </article>
+
+                    <article class="feat-card">
+                        <div class="feat-icon-box">🛠️</div>
+                        <h3>Autonomous MCP Agent</h3>
+                        <p>Connects to remote and local Model Context Protocol servers for multi-step SQLite analysis, file system management, and web lookup.</p>
+                    </article>
+
+                    <article class="feat-card">
+                        <div class="feat-icon-box">🧪</div>
+                        <h3>Prompt Lab Studio</h3>
+                        <p>Dedicated single-turn productivity studio for rapid summarization, tone enhancement, and deep software code decomposition.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== Obsidian Markdown Vault Deep Dive ========== -->
+        <section class="section obsidian-section" id="obsidian-vault" aria-label="Obsidian Markdown Vault Integration">
+            <div class="container">
+                <div class="obsidian-split-grid fade-in">
+                    <div class="obsidian-info">
+                        <span class="badge-sub">ZERO LOCK-IN STORAGE</span>
+                        <h2 class="section-title">Open Markdown Database for Obsidian</h2>
+                        <p class="obsidian-p">
+                            Most AI chat applications trap your personal thoughts, code, and brainstorming in proprietary, encrypted cloud databases. <strong>Oorty changes the paradigm.</strong>
+                        </p>
+
+                        <div class="obsidian-points-list">
+                            <div class="obsidian-point">
+                                <div class="point-icon">📁</div>
+                                <div>
+                                    <h4>Dual-Write Local Architecture</h4>
+                                    <p>Chats are simultaneously stored in app memory and saved as clean <code>.md</code> notes into your public <code>Documents/Oorty/chats/</code> directory.</p>
                                 </div>
-                                <div class="cloud-mini-card">
-                                    <strong>Claude 3.7 Sonnet</strong>
-                                    <span>Anthropic BYOK</span>
+                            </div>
+                            <div class="obsidian-point">
+                                <div class="point-icon">🏷️</div>
+                                <div>
+                                    <h4>Standard YAML Frontmatter</h4>
+                                    <p>Includes timestamps, model IDs, token estimates, and automatic TF-IDF topic tagging for instantaneous Obsidian graph integration.</p>
                                 </div>
-                                <div class="cloud-mini-card">
-                                    <strong>GPT-4o</strong>
-                                    <span>OpenAI Direct</span>
+                            </div>
+                            <div class="obsidian-point">
+                                <div class="point-icon">🧠</div>
+                                <div>
+                                    <h4>384-D Hybrid Semantic Memory</h4>
+                                    <p>Subword n-gram vector embeddings compute cosine similarity across your vault to passively inject past discussions into fresh conversations.</p>
                                 </div>
-                                <div class="cloud-mini-card">
-                                    <strong>DeepSeek R1</strong>
-                                    <span>Groq 400 tok/s</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Split Note Viewer -->
+                    <div class="obsidian-interactive-viewer">
+                        <div class="viewer-top-bar">
+                            <div class="viewer-tabs">
+                                <button class="v-tab active" id="btnRawMd">Raw Markdown (.md)</button>
+                                <button class="v-tab" id="btnRenderedMd">Obsidian Rendered</button>
+                            </div>
+                            <button class="btn-copy-note" id="btnCopyNote">Copy Note</button>
+                        </div>
+                        <div class="viewer-content-viewport">
+                            <div class="viewer-pane active" id="paneRawMd">
+                                <pre><code class="language-markdown">---
+id: "8c3f91d2-e5b7-4a01-9876-123456789abc"
+title: "Jetpack Compose Performance Best Practices"
+created: "2026-08-29T17:02:42+05:30"
+updated: "2026-08-29T17:15:00+05:30"
+model: "Qwen2.5-0.5B-Instruct"
+provider: "LOCAL_GGUF"
+total_tokens_est: 2840
+tags: ["#android", "#compose", "#performance", "#stability"]
+message_count: 2
+---
+
+# Jetpack Compose Performance Best Practices
+
+## 🧑 User — 17:02
+What are the top 3 rules for preventing unnecessary recompositions?
+
+## 🤖 Oorty (Qwen2.5-0.5B) — 17:03 | 28.4 tok/s
+1. **Prefer Lambdas Over Direct State Access**: Pass `() -> Int` to defer reads.
+2. **Mark Data Classes with `@Immutable` or `@Stable`** when containing unstable collections.
+3. **Use `remember(key)` and `derivedStateOf`** for expensive calculations.</code></pre>
+                            </div>
+                            <div class="viewer-pane" id="paneRenderedMd">
+                                <div class="rendered-note-view">
+                                    <div class="note-meta-pills">
+                                        <span class="note-pill">#android</span>
+                                        <span class="note-pill">#compose</span>
+                                        <span class="note-pill">#performance</span>
+                                        <span class="note-pill">#stability</span>
+                                    </div>
+                                    <h1 class="note-title">Jetpack Compose Performance Best Practices</h1>
+                                    <div class="note-user-section">
+                                        <strong>🧑 User</strong> <span class="note-timestamp">17:02</span>
+                                        <p>What are the top 3 rules for preventing unnecessary recompositions?</p>
+                                    </div>
+                                    <hr class="note-divider">
+                                    <div class="note-bot-section">
+                                        <strong>🤖 Oorty (Qwen2.5-0.5B)</strong> <span class="note-timestamp">17:03 • 28.4 tok/s</span>
+                                        <ol>
+                                            <li><strong>Prefer Lambdas Over Direct State Access</strong>: Pass <code>() -&gt; Int</code> to defer reads until layout phase.</li>
+                                            <li><strong>Mark Data Classes with <code>@Immutable</code> or <code>@Stable</code></strong> when passing collections across module boundaries.</li>
+                                            <li><strong>Use <code>derivedStateOf</code></strong> for rapidly mutating values like scroll offsets.</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== Autonomous MCP (Model Context Protocol) Section ========== -->
+        <section class="section mcp-section" id="mcp-agents" aria-label="Model Context Protocol Autonomous Agents">
+            <div class="container">
+                <div class="section-header text-center fade-in">
+                    <span class="badge-sub">STANDARDIZED AGENTIC INTERFACE</span>
+                    <h2 class="section-title">Autonomous MCP Tool Execution</h2>
+                    <p class="section-desc">Connect to open-standard Model Context Protocol servers over HTTP/SSE. Orchestrated via <code>ToolCallOrchestrator.kt</code>.</p>
+                </div>
+
+                <div class="mcp-agent-workbench fade-in">
+                    <!-- Workbench Left: Tools Control -->
+                    <div class="mcp-controls-card">
+                        <h3>Registered MCP Tool Servers</h3>
+                        <p>Toggle servers or individual tools in real-time:</p>
+                        
+                        <div class="mcp-server-list">
+                            <div class="mcp-server-item">
+                                <div class="server-header">
+                                    <strong>📁 Local Vault Search Server</strong>
+                                    <span class="status-online">Online</span>
+                                </div>
+                                <span class="server-url">stdio://vault-indexer</span>
+                                <div class="server-tools">
+                                    <label class="tool-checkbox"><input type="checkbox" checked disabled> <code>recall_from_vault</code></label>
+                                    <label class="tool-checkbox"><input type="checkbox" checked disabled> <code>save_note</code></label>
+                                </div>
+                            </div>
+
+                            <div class="mcp-server-item">
+                                <div class="server-header">
+                                    <strong>🌐 Web &amp; SQLite Client</strong>
+                                    <span class="status-online">Online</span>
+                                </div>
+                                <span class="server-url">http://localhost:8080/mcp</span>
+                                <div class="server-tools">
+                                    <label class="tool-checkbox"><input type="checkbox" checked disabled> <code>sqlite_query</code></label>
+                                    <label class="tool-checkbox"><input type="checkbox" checked disabled> <code>http_fetch</code></label>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- In-Phone Message Composer -->
-                        <div class="phone-composer">
-                            <span class="composer-icon">📎</span>
-                            <div class="composer-input">Ask local model anything...</div>
-                            <span class="composer-mic">🎙️</span>
-                            <div class="composer-send">➤</div>
+                        <button class="btn btn-primary btn-block" id="btnSimulateMcpRun">
+                            <span>Execute Sample Agent Loop</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Workbench Right: Real-time Trace Log -->
+                    <div class="mcp-trace-card">
+                        <div class="trace-header">
+                            <span>Agent Execution Trace (`ToolCallEvent.kt`)</span>
+                            <span class="trace-badge-idle" id="traceBadge">Idle</span>
+                        </div>
+                        <div class="trace-logs-box" id="traceLogsBox">
+                            <div class="trace-item">[READY] ToolCallOrchestrator initialized with 4 available tools.</div>
+                            <div class="trace-item">[POLICY] Strict schema validation active. Max iterations = 5.</div>
+                            <div class="trace-item">[INFO] Click "Execute Sample Agent Loop" to trigger automated multi-step tool calls.</div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ========== Supported Providers Banner ========== -->
-    <section class="providers" aria-label="Supported AI providers">
-        <div class="container">
-            <p class="providers-label">Unifying On-Device & Cloud AI Ecosystems</p>
-            <div class="providers-grid">
-                <div class="provider-item">⚡ Native GGUF (llama.cpp)</div>
-                <div class="provider-item">Google LiteRT</div>
-                <div class="provider-item">Google Gemini</div>
-                <div class="provider-item">Anthropic Claude</div>
-                <div class="provider-item">OpenAI GPT-4o</div>
-                <div class="provider-item">Groq LPU</div>
-                <div class="provider-item">NVIDIA NIM</div>
-                <div class="provider-item">Sednium Rosette</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ========== Features Section ========== -->
-    <section class="features" id="features" aria-label="Sednium Oorty features">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-tag">Core Architecture</span>
-                <h2 class="section-title">Built for Modern AI Engineers & Note-Takers</h2>
-                <p class="section-desc">From offline GGUF execution to Markdown databases, every layer is engineered for performance and privacy.</p>
-            </div>
-            <div class="features-grid fade-in">
-                <article class="feature-card">
-                    <div class="feature-icon" aria-hidden="true">⚡</div>
-                    <h3>On-Device GGUF Engine</h3>
-                    <p>Run open-weights models (Qwen 2.5, Llama 3.2, Gemma 2, Phi-3 Mini) with zero internet connection, real-time tok/s metrics, and SAF storage persistence.</p>
-                </article>
-                <article class="feature-card">
-                    <div class="feature-icon" aria-hidden="true">📓</div>
-                    <h3>Obsidian Markdown Vault</h3>
-                    <p>Every chat is dual-written as standard <code>.md</code> files into <code>Documents/Oorty/chats/</code> with structured YAML frontmatter, headers, tags, and speed logs.</p>
-                </article>
-                <article class="feature-card">
-                    <div class="feature-icon" aria-hidden="true">🛡️</div>
-                    <h3>Dynamic RAM Watchdog</h3>
-                    <p>Active hardware memory safety: checks real-time available RAM via <code>ActivityManager.MemoryInfo</code> to prevent system out-of-memory crashes.</p>
-                </article>
-                <article class="feature-card">
-                    <div class="feature-icon" aria-hidden="true">🧠</div>
-                    <h3>Hybrid Semantic AI Recall</h3>
-                    <p>384-dimensional vector embeddings rank past conversations using Cosine similarity to automatically inject relevant memory into fresh prompt turns.</p>
-                </article>
-                <article class="feature-card">
-                    <div class="feature-icon" aria-hidden="true">🛠️</div>
-                    <h3>MCP Agentic Framework</h3>
-                    <p>Connect to Model Context Protocol (MCP) servers and execute multi-step tool calls even on compact on-device models with JSON schema injection.</p>
-                </article>
-                <article class="feature-card">
-                    <div class="feature-icon" aria-hidden="true">🔒</div>
-                    <h3>Biometric App Lock & BYOK</h3>
-                    <p>All API keys, model presets, and chat vaults are stored locally on your device with optional hardware biometric fingerprint and face unlock.</p>
-                </article>
-            </div>
-        </div>
-    </section>
-
-    <!-- ========== Hardware RAM Fit Calculator ========== -->
-    <section class="ram-calculator-section" id="hardware-fit" aria-label="Interactive Phone RAM Compatibility Calculator">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-tag">Hardware Compatibility</span>
-                <h2 class="section-title">RAM & Model Fit Calculator</h2>
-                <p class="section-desc">Select your phone's memory to find the perfect on-device GGUF model that runs smoothly without crashing.</p>
-            </div>
-
-            <div class="ram-calc-widget fade-in">
-                <div class="ram-buttons" role="group" aria-label="Select RAM capacity">
-                    <button class="ram-btn" data-ram="4">4 GB RAM</button>
-                    <button class="ram-btn active" data-ram="6">6 GB RAM</button>
-                    <button class="ram-btn" data-ram="8">8 GB RAM</button>
-                    <button class="ram-btn" data-ram="12">12 GB+ RAM</button>
+        <!-- ========== Architecture & Code Exploration Section ========== -->
+        <section class="section code-section" id="code-arch" aria-label="Code Architecture & Engineering">
+            <div class="container">
+                <div class="section-header text-center fade-in">
+                    <span class="badge-sub">ENGINEERING RIGOR</span>
+                    <h2 class="section-title">Native Kotlin &amp; C++ Architecture</h2>
+                    <p class="section-desc">Inspect the actual production source code powering on-device intelligence and reactive state orchestration.</p>
                 </div>
 
-                <div class="ram-result-card" id="ram-result">
-                    <div class="ram-result-header">
-                        <div>
-                            <h3 class="ram-model-name" id="calc-model-name">Llama 3.2 (1B-Instruct)</h3>
-                            <span class="ram-quant-badge" id="calc-quant">Q4_K_M • ~850 MB VRAM</span>
-                        </div>
-                        <div class="fit-indicator fit-comfortable" id="calc-fit-badge">Comfortable 🟢</div>
+                <div class="code-tabs-container fade-in">
+                    <!-- Tab Headers -->
+                    <div class="code-tab-nav" role="tablist">
+                        <button class="code-tab-btn active" data-code="llama">LlamaHelper.kt</button>
+                        <button class="code-tab-btn" data-code="titlegen">LiteRtTitleGen.kt</button>
+                        <button class="code-tab-btn" data-code="thought">StreamingThoughtParser.kt</button>
+                        <button class="code-tab-btn" data-code="storage">StorageHelper.kt</button>
                     </div>
-                    <p class="ram-desc" id="calc-desc">Excellent sweet spot for 6GB devices. Delivers 25–35 tok/s decode speed with fast responses and low battery consumption.</p>
-                    <div class="ram-specs-grid">
-                        <div class="spec-item">
-                            <span class="spec-label">Expected Speed</span>
-                            <span class="spec-value" id="calc-speed">~30 tok/s</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Safe Context</span>
-                            <span class="spec-value" id="calc-context">2048 Tokens</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Agentic Rating</span>
-                            <span class="spec-value" id="calc-agentic">⚡ Limited (Fast)</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- ========== Obsidian Vault Workflow Section ========== -->
-    <section class="obsidian-section" id="obsidian-vault" aria-label="Obsidian Markdown Integration">
-        <div class="container">
-            <div class="obsidian-grid fade-in">
-                <div class="obsidian-text">
-                    <span class="section-tag">Direct Obsidian Sync</span>
-                    <h2 class="section-title">Your Chats as an Open Markdown Database</h2>
-                    <p>Unlike proprietary chat apps that lock your conversations into closed cloud databases, Oorty writes standard <code>.md</code> files straight to your device's <code>Documents/Oorty/chats/</code> folder.</p>
-                    <ul class="obsidian-features">
-                        <li><strong>Obsidian Mobile Ready</strong>: Point Obsidian to <code>Documents/Oorty/</code> to search, tag, and link your AI discussions instantly.</li>
-                        <li><strong>Structured YAML Frontmatter</strong>: Every note contains title, timestamp, tokens, model, and TF-IDF generated topic tags.</li>
-                        <li><strong>Zero Vendor Lock-In</strong>: Move, backup, sync via Git or Syncthing, or edit in any markdown editor.</li>
-                    </ul>
-                </div>
-                <div class="obsidian-card">
-                    <div class="obsidian-card-top">
-                        <span>📱 Obsidian Mobile Vault View</span>
-                    </div>
-                    <div class="obsidian-preview-content">
-                        <div class="obsidian-file-tree">
-                            <div class="tree-item">📁 Documents/Oorty/</div>
-                            <div class="tree-item child">📁 chats/</div>
-                            <div class="tree-item grand active">📄 kotlin-stateflow-4fa4.md</div>
-                            <div class="tree-item grand">📄 room-database-setup-328a.md</div>
-                            <div class="tree-item grand">📄 system-architecture-9661.md</div>
-                            <div class="tree-item child">📁 models/</div>
+                    <!-- Tab Contents -->
+                    <div class="code-tab-content active" id="tab-code-llama">
+                        <div class="code-header">
+                            <span>app/src/main/java/oorty/sednium/app/api/LlamaHelper.kt</span>
+                            <button class="btn-copy-code" data-target="#codeLlama">Copy Code</button>
                         </div>
+                        <pre id="codeLlama"><code class="language-kotlin">// Native GGUF Inference Streaming via llama.cpp Kotlin Bindings
+class LlamaHelper(private val context: Context, private val uri: Uri) {
+    suspend fun generateStream(
+        prompt: String,
+        systemInstruction: String,
+        temperature: Float = 0.7f
+    ): Flow&lt;String&gt; = flow {
+        val model = LlamaModel(context, uri)
+        val session = model.createSession()
+        
+        session.streamTokens(prompt, systemInstruction, temperature).collect { chunk -&gt;
+            emit(chunk) // Real-time token emission back to Jetpack Compose UI
+        }
+    }.flowOn(Dispatchers.Default)
+}</code></pre>
+                    </div>
+
+                    <div class="code-tab-content" id="tab-code-titlegen">
+                        <div class="code-header">
+                            <span>app/src/main/java/oorty/sednium/app/api/LiteRtTitleGen.kt</span>
+                            <button class="btn-copy-code" data-target="#codeTitleGen">Copy Code</button>
+                        </div>
+                        <pre id="codeTitleGen"><code class="language-kotlin">// Zero-GPU TF-IDF Title Generation in &lt;10ms
+object LiteRtTitleGen {
+    fun generateTitle(userMessage: String, modelResponse: String): String {
+        val tokens = (userMessage + " " + modelResponse)
+            .lowercase()
+            .split(Regex("[^a-zA-Z0-9]+"))
+            .filter { it.length &gt; 3 &amp;&amp; it !in StopWords.SET }
+            
+        val topKeywords = tokens.groupingBy { it }.eachCount()
+            .entries.sortedByDescending { it.value }
+            .take(4).map { it.key.replaceFirstChar { c -&gt; c.uppercase() } }
+            
+        return if (topKeywords.isNotEmpty()) topKeywords.joinToString(" ") else "New Chat"
+    }
+}</code></pre>
+                    </div>
+
+                    <div class="code-tab-content" id="tab-code-thought">
+                        <div class="code-header">
+                            <span>app/src/main/java/oorty/sednium/app/api/StreamingThoughtParser.kt</span>
+                            <button class="btn-copy-code" data-target="#codeThought">Copy Code</button>
+                        </div>
+                        <pre id="codeThought"><code class="language-kotlin">// Real-time Collapsible &lt;think&gt; Tag Stream Parsing
+class StreamingThoughtParser {
+    private var inThinking = false
+    private val thoughtBuffer = StringBuilder()
+    private val contentBuffer = StringBuilder()
+
+    fun feedChunk(chunk: String): ThoughtParseResult {
+        // Statefully separates &lt;think&gt; tags into thought channel and content channel
+        // Allowing collapsible reasoning accordions in Jetpack Compose ChatScreen
+        return ThoughtParseResult(
+            thought = thoughtBuffer.toString(),
+            content = contentBuffer.toString(),
+            isThinking = inThinking
+        )
+    }
+}</code></pre>
+                    </div>
+
+                    <div class="code-tab-content" id="tab-code-storage">
+                        <div class="code-header">
+                            <span>app/src/main/java/oorty/sednium/app/StorageHelper.kt</span>
+                            <button class="btn-copy-code" data-target="#codeStorage">Copy Code</button>
+                        </div>
+                        <pre id="codeStorage"><code class="language-kotlin">// Dual-Write Public MediaStore Sync for Obsidian Compatibility
+object StorageHelper {
+    suspend fun saveChatToVault(context: Context, session: ChatSession) = withContext(Dispatchers.IO) {
+        val vaultDir = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+            "Oorty/chats"
+        ).apply { mkdirs() }
+        
+        val markdownFile = File(vaultDir, "${session.id}.md")
+        val markdownContent = formatSessionToYamlMarkdown(session)
+        markdownFile.writeText(markdownContent)
+    }
+}</code></pre>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ========== FAQ Section ========== -->
-    <section class="faq" id="faq" aria-label="Frequently asked questions">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-tag">FAQ</span>
-                <h2 class="section-title">Frequently Asked Questions</h2>
-            </div>
-            <div class="faq-search-wrap fade-in">
-                <input type="text" id="faqSearch" placeholder="Search questions (e.g. GGUF, Obsidian, RAM, API keys)..." aria-label="Search FAQ">
-            </div>
-            <div class="faq-accordion fade-in">
-                <details class="faq-item">
-                    <summary class="faq-question">How does on-device GGUF inference work in Oorty?</summary>
-                    <div class="faq-answer">
-                        <p>Oorty integrates a native llama.cpp engine via Kotlin Coroutines. You can download quantized GGUF models directly from HuggingFace within the app or choose custom files from your device storage. Generation streams token-by-token directly in RAM without sending any data to the cloud.</p>
-                    </div>
-                </details>
-                <details class="faq-item">
-                    <summary class="faq-question">Where are my chats saved and can I view them in Obsidian?</summary>
-                    <div class="faq-answer">
-                        <p>Yes! Every chat session is saved in public storage at <code>Documents/Oorty/chats/</code> as standard <code>.md</code> Markdown notes with YAML frontmatter. Open the Obsidian mobile app and tap "Open folder as vault" on <code>Documents/Oorty/</code> to immediately explore all your chats.</p>
-                    </div>
-                </details>
-                <details class="faq-item">
-                    <summary class="faq-question">What happens if I try to load a model too large for my phone?</summary>
-                    <div class="faq-answer">
-                        <p>Oorty's built-in <strong>HardwareChecker</strong> evaluates your device's currently available RAM. If the model requires more memory than is safely available, Oorty displays a warning dialog detailing the RAM deficit and suggests lighter 4-bit quantizations to prevent system crashes.</p>
-                    </div>
-                </details>
-                <details class="faq-item">
-                    <summary class="faq-question">Do I need to pay or buy a subscription to use Oorty?</summary>
-                    <div class="faq-answer">
-                        <p>No! Oorty is 100% free and open-source under the MIT license. For local GGUF models, it runs completely free offline. For cloud models (Gemini, Claude, GPT-4o, Groq), you simply supply your own API keys (BYOK) and pay direct provider rates with zero markup.</p>
-                    </div>
-                </details>
-            </div>
-        </div>
-    </section>
+        <!-- ========== Comprehensive FAQ Section ========== -->
+        <section class="section faq-section" id="faq" aria-label="Frequently Asked Questions">
+            <div class="container">
+                <div class="section-header text-center fade-in">
+                    <span class="badge-sub">HELP &amp; KNOWLEDGE BASE</span>
+                    <h2 class="section-title">Frequently Asked Questions</h2>
+                    <p class="section-desc">Everything you need to know about on-device inference, Obsidian sync, and API keys.</p>
+                </div>
 
-    <!-- ========== CTA Section ========== -->
-    <section class="cta" aria-label="Download Sednium Oorty">
-        <div class="container">
-            <div class="cta-content fade-in">
-                <h2 class="cta-title">Take Control of Your AI Intelligence</h2>
-                <p class="cta-subtitle">Run offline GGUF models, store your knowledge in Obsidian, and orchestrate top cloud LLMs in one unified workspace.</p>
-                <div class="cta-actions">
-                    <a href="https://github.com/AnkushDas4/OORTY/releases/download/v1.0.0/oorty-app.apk" class="btn btn-large btn-primary">Download APK (v1.0.0 • 89 MB)</a>
-                    <a href="https://github.com/AnkushDas4/OORTY/releases/tag/v1.0.0" class="btn btn-large btn-outline" target="_blank" rel="noopener">Release Notes (v1.0.0)</a>
+                <div class="faq-search-box fade-in">
+                    <input type="text" id="faqInput" placeholder="Search questions (e.g., GGUF, Obsidian, RAM, API Keys, Termux)..." aria-label="Search FAQ">
+                </div>
+
+                <div class="faq-list fade-in" id="faqAccordion">
+                    <details class="faq-card">
+                        <summary class="faq-quest">How does on-device GGUF inference work on Android without root?</summary>
+                        <div class="faq-ans">
+                            <p>Oorty runs an optimized ARM NEON llama.cpp runtime embedded natively via JNI inside the APK. You can download quantized GGUF models directly via the built-in HuggingFace Hub or load any GGUF file from your phone storage via Android's Storage Access Framework (SAF). Everything processes 100% locally in your device's memory.</p>
+                        </div>
+                    </details>
+
+                    <details class="faq-card">
+                        <summary class="faq-quest">How do I connect Oorty directly to the Obsidian Mobile app?</summary>
+                        <div class="faq-ans">
+                            <p>Oorty automatically saves every conversation into <code>Documents/Oorty/chats/</code> with complete YAML frontmatter (tags, timestamps, token counts). In the Obsidian Android app, tap <strong>"Open folder as vault"</strong>, select <code>Documents/Oorty/</code>, and your entire chat history will instantly appear as searchable Markdown notes with graph links!</p>
+                        </div>
+                    </details>
+
+                    <details class="faq-card">
+                        <summary class="faq-quest">What is the Dynamic RAM Watchdog and how does it prevent crashes?</summary>
+                        <div class="faq-ans">
+                            <p>Loading large neural networks on Android can trigger the Linux Out-Of-Memory (OOM) killer. Oorty uses <code>HardwareChecker.kt</code> to inspect real-time available RAM before loading. If a model exceeds 55% of free RAM, it issues a helpful warning. If it exceeds 85%, it suggests a lighter quantization (e.g. Q4_K_M) to guarantee zero system freezes.</p>
+                        </div>
+                    </details>
+
+                    <details class="faq-card">
+                        <summary class="faq-quest">Can I use cloud AI models alongside local GGUF models?</summary>
+                        <div class="faq-ans">
+                            <p>Yes! Oorty is a complete multi-provider orchestrator. You can switch between on-device GGUF and cloud providers (Google Gemini 2.5, Anthropic Claude 3.7 Sonnet, OpenAI GPT-4o, Groq LPU, NVIDIA NIM, xAI Grok, OpenRouter) simply by inputting your personal API keys (BYOK) with zero intermediary server fees.</p>
+                        </div>
+                    </details>
+
+                    <details class="faq-card">
+                        <summary class="faq-quest">How do I run a background llama-server via Termux?</summary>
+                        <div class="faq-ans">
+                            <p>Install Termux on your device, build llama.cpp using <code>pkg install clang cmake git &amp;&amp; make -j4</code>, and launch <code>./llama-server -m ~/model.gguf --port 8080</code>. In Oorty Settings, select <strong>LOCAL SERVER</strong> and set the Base URL to <code>http://localhost:8080/v1</code>!</p>
+                        </div>
+                    </details>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <!-- ========== Final Call to Action ========== -->
+        <section class="section cta-section" aria-label="Download Sednium Oorty">
+            <div class="container">
+                <div class="cta-banner fade-in">
+                    <div class="cta-badge">FREE &amp; OPEN SOURCE • MIT LICENSED</div>
+                    <h2 class="cta-headline">Experience True AI Privacy &amp; Power</h2>
+                    <p class="cta-sub">Join thousands of developers running local GGUF intelligence and syncing to Obsidian Markdown vaults.</p>
+                    <div class="cta-buttons">
+                        <a href="https://github.com/Sednium-Technologies/OORTY/releases/download/v1.0.0/oorty-app.apk" class="btn btn-primary btn-lg pulse-button">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span>Download APK (v1.0.0 • 89 MB)</span>
+                        </a>
+                        <a href="https://github.com/Sednium-Technologies/OORTY" class="btn btn-outline btn-lg" target="_blank" rel="noopener">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+                            <span>Star on GitHub</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- ========== Footer ========== -->
     <footer class="footer" role="contentinfo">
         <div class="container">
-            <div class="footer-top">
-                <div class="footer-brand">
+            <div class="footer-grid">
+                <div class="footer-col-brand">
                     <div class="logo">
-                        <img src="assets/logo.jpg" alt="Sednium Oorty" class="logo-img" width="28" height="28">
+                        <img src="assets/logo.jpg" alt="Sednium Oorty Logo" class="logo-img" width="32" height="32">
                         <span class="logo-text">Oorty</span>
                     </div>
-                    <p class="footer-tagline">Engineered for on-device intelligence, privacy, and autonomous workflows.</p>
+                    <p class="footer-tagline">Engineered by Sednium Technologies for privacy-first, on-device intelligence, and open knowledge workflows.</p>
+                    <div class="footer-social-links">
+                        <a href="https://github.com/Sednium-Technologies/OORTY" target="_blank" rel="noopener" aria-label="GitHub">GitHub</a>
+                        <a href="https://sednium.com" target="_blank" rel="noopener" aria-label="Sednium">Sednium.com</a>
+                    </div>
                 </div>
-                <div class="footer-links-group">
-                    <div class="footer-col">
-                        <h4>Platform</h4>
-                        <a href="#features">Features</a>
-                        <a href="#local-models">GGUF Inference</a>
-                        <a href="#obsidian-vault">Obsidian Vault</a>
-                        <a href="#hardware-fit">RAM Calculator</a>
-                    </div>
-                    <div class="footer-col">
-                        <h4>Resources</h4>
-                        <a href="https://github.com/AnkushDas4/OORTY" target="_blank" rel="noopener">GitHub</a>
-                        <a href="https://github.com/AnkushDas4/OORTY/releases" target="_blank" rel="noopener">Releases</a>
-                        <a href="https://sednium.com" target="_blank" rel="noopener">Sednium</a>
-                    </div>
+
+                <div class="footer-col">
+                    <h4>Navigation</h4>
+                    <a href="#features">Features</a>
+                    <a href="#prompt-lab">Prompt Lab</a>
+                    <a href="#hf-hub">GGUF Hub</a>
+                    <a href="#hardware-fit">RAM Watchdog</a>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Architecture</h4>
+                    <a href="#obsidian-vault">Obsidian Vault</a>
+                    <a href="#mcp-agents">MCP Agents</a>
+                    <a href="#code-arch">Kotlin Source</a>
+                    <a href="#faq">FAQ</a>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Releases &amp; Specs</h4>
+                    <a href="https://github.com/Sednium-Technologies/OORTY/releases" target="_blank" rel="noopener">Release Notes</a>
+                    <a href="https://github.com/Sednium-Technologies/OORTY/blob/main/PROJECT.md" target="_blank" rel="noopener">PROJECT.md</a>
+                    <a href="https://github.com/Sednium-Technologies/OORTY/blob/main/rosette.md" target="_blank" rel="noopener">rosette.md</a>
                 </div>
             </div>
-            <div class="footer-bottom">
-                <p class="footer-copy">&copy; <span id="currentYear">2026</span> Sednium. MIT Licensed.</p>
+
+            <div class="footer-bottom-bar">
+                <p>&copy; <span id="currentYear">2026</span> Sednium Technologies. Open source under MIT License.</p>
+                <div class="footer-bottom-links">
+                    <a href="#top">Back to top ↑</a>
+                </div>
             </div>
         </div>
     </footer>
-<!-- triggering vercel -->
-    <!-- Scripts -->
+
+    <!-- Core Interactive JavaScript -->
     <script src="js/script.js"></script>
 </body>
 </html>
