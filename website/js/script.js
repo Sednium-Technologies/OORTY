@@ -38,9 +38,8 @@
         const toggleBtn = $('#themeToggle');
         const root = document.documentElement;
         
-        // Retrieve saved theme or system preference
-        const savedTheme = localStorage.getItem('oorty-theme') || 
-            (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        // Retrieve saved theme or default to dark
+        const savedTheme = localStorage.getItem('oorty-theme') || 'dark';
             
         root.setAttribute('data-theme', savedTheme);
 
