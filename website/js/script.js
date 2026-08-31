@@ -598,21 +598,33 @@ Text(text = state.userQuery)",
         const elements = $$('.fade-in');
         if (!elements.length) return;
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, { threshold: 0.12 });
+        // Reveal all visible elements immediately
+        elements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            if (rect.top < window.innerHeight) {
+                el.classList.add('visible');
+            }
+        });
 
-        elements.forEach(el => observer.observe(el));
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.08 });
+
+            elements.forEach(el => observer.observe(el));
+        } else {
+            elements.forEach(el => el.classList.add('visible'));
+        }
     }
 
     // =========================================================================
-    // Initialization
+    // Bootstrap / Initialization Safe Check
     // =========================================================================
-    document.addEventListener('DOMContentLoaded', () => {
+    function initAll() {
         initTheme();
         initMobileNav();
         initPhoneSimulator();
@@ -624,6 +636,12 @@ Text(text = state.userQuery)",
         initCodeTabs();
         initFaqSearch();
         initScrollAnimations();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+        initAll();
+    }
 
 })();
