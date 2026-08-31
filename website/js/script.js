@@ -1,5 +1,5 @@
 // ==========================================================================
-// Sednium Oorty — Comprehensive Interactive Controller & Studio Engine
+// Sednium Oorty — Comprehensive Interactive Controller & Event Engine
 // ==========================================================================
 
 (function () {
@@ -9,7 +9,7 @@
     const $ = (sel, ctx = document) => ctx.querySelector(sel);
     const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
-    // SVG Icon Map for Toasts and Components
+    // SVG Icon Map for Toasts and Interactive Feedback
     const SVG_ICONS = {
         check: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
         copy: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
@@ -19,7 +19,8 @@
         document: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
         clock: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
         warning: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-        wrench: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'
+        wrench: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+        download: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>'
     };
 
     // Toast Notification Dispatcher
@@ -46,118 +47,83 @@
     if (yearEl) yearEl.textContent = new Date().getFullYear();
 
     // =========================================================================
-    // 1. Theme Toggle (Dark / Light Mode)
+    // 1. Theme Management
     // =========================================================================
-    function initTheme() {
-        const toggleBtn = $('#themeToggle');
+    function toggleTheme() {
         const root = document.documentElement;
-        
-        // Retrieve saved theme or default to dark
-        const savedTheme = localStorage.getItem('oorty-theme') || 'dark';
-        root.setAttribute('data-theme', savedTheme);
+        const current = root.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        localStorage.setItem('oorty-theme', next);
+        showToast(`Switched to ${next.toUpperCase()} theme`, next === 'dark' ? 'moon' : 'sun');
+    }
 
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
-                const current = root.getAttribute('data-theme');
-                const next = current === 'dark' ? 'light' : 'dark';
-                root.setAttribute('data-theme', next);
-                localStorage.setItem('oorty-theme', next);
-                showToast(`Switched to ${next.toUpperCase()} theme`, next === 'dark' ? 'moon' : 'sun');
-            });
-        }
+    function initTheme() {
+        const savedTheme = localStorage.getItem('oorty-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
     // =========================================================================
     // 2. Mobile Drawer Navigation
     // =========================================================================
-    function initMobileNav() {
-        const hamburger = $('#hamburger');
+    function openDrawer() {
         const drawer = $('#mobileDrawer');
-        const closeBtn = $('#drawerClose');
-        const drawerLinks = $$('.drawer-link');
-
-        if (!hamburger || !drawer) return;
-
-        const openDrawer = () => {
+        const hamburger = $('#hamburger');
+        if (drawer) {
             drawer.classList.add('open');
             drawer.setAttribute('aria-hidden', 'false');
-            hamburger.setAttribute('aria-expanded', 'true');
-        };
-        const closeDrawer = () => {
+        }
+        if (hamburger) hamburger.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeDrawer() {
+        const drawer = $('#mobileDrawer');
+        const hamburger = $('#hamburger');
+        if (drawer) {
             drawer.classList.remove('open');
             drawer.setAttribute('aria-hidden', 'true');
-            hamburger.setAttribute('aria-expanded', 'false');
-        };
-
-        hamburger.addEventListener('click', openDrawer);
-        if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
-        drawer.addEventListener('click', (e) => {
-            if (e.target === drawer) closeDrawer();
-        });
-        drawerLinks.forEach(l => l.addEventListener('click', closeDrawer));
+        }
+        if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
     }
 
     // =========================================================================
     // 3. Interactive Phone Simulator
     // =========================================================================
-    function initPhoneSimulator() {
-        // Clock updater
-        const clockEl = $('#deviceClock');
-        if (clockEl) {
-            const updateClock = () => {
-                const now = new Date();
-                clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            };
-            updateClock();
-            setInterval(updateClock, 30000);
-        }
+    const phoneModes = {
+        'gguf': { status: 'LOCAL_GGUF • Quick Mode', ram: '420MB / Safe' },
+        'thinking': { status: 'LOCAL_GGUF • Thinking Mode', ram: '680MB / Safe' },
+        'vault': { status: 'Obsidian Dual-Write Active', ram: '100% Synced' },
+        'mcp': { status: 'MCP Agent • Tool Loop', ram: 'Orchestrator Online' },
+        'cloud': { status: 'Multi-Cloud Router (BYOK)', ram: 'Cloud Zero-RAM' }
+    };
 
-        // Mode Segmented Tabs
-        const modeTabs = $$('.mode-tab-btn');
-        const views = $$('.phone-view');
+    function setPhoneMode(mode) {
+        if (!phoneModes[mode]) return;
+        
+        $$('.mode-tab-btn').forEach(btn => {
+            const isActive = btn.dataset.mode === mode;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        $$('.phone-view').forEach(v => {
+            v.classList.toggle('active', v.id === `view-${mode}`);
+        });
+
         const statusLabel = $('#phoneStatusLabel');
         const ramTag = $('#phoneRamTag');
+        if (statusLabel) statusLabel.textContent = phoneModes[mode].status;
+        if (ramTag) {
+            ramTag.innerHTML = `<span class="ram-dot"></span><span>${phoneModes[mode].ram}</span>`;
+        }
+    }
 
-        const modeData = {
-            'gguf': { status: 'LOCAL_GGUF • Quick Mode', ram: '420MB / Safe', ramClass: 'badge-safe' },
-            'thinking': { status: 'LOCAL_GGUF • Thinking Mode', ram: '680MB / Safe', ramClass: 'badge-safe' },
-            'vault': { status: 'Obsidian Dual-Write Active', ram: '100% Synced', ramClass: 'badge-safe' },
-            'mcp': { status: 'MCP Agent • Tool Loop', ram: 'Orchestrator Online', ramClass: 'badge-safe' },
-            'cloud': { status: 'Multi-Cloud Router (BYOK)', ram: 'Cloud Zero-RAM', ramClass: 'badge-safe' }
-        };
-
-        modeTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const mode = tab.dataset.mode;
-
-                modeTabs.forEach(t => {
-                    t.classList.toggle('active', t === tab);
-                    t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
-                });
-
-                views.forEach(v => {
-                    v.classList.toggle('active', v.id === `view-${mode}`);
-                });
-
-                if (statusLabel && modeData[mode]) {
-                    statusLabel.textContent = modeData[mode].status;
-                }
-                if (ramTag && modeData[mode]) {
-                    ramTag.innerHTML = `<span class="ram-dot"></span><span>${modeData[mode].ram}</span>`;
-                }
-            });
-        });
-
-        // Copy buttons inside phone
-        $$('.btn-copy-code').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const text = btn.dataset.copy || btn.closest('.code-snippet-box')?.querySelector('pre')?.innerText;
-                if (text) {
-                    navigator.clipboard.writeText(text);
-                    showToast('Code copied to clipboard!', 'copy');
-                }
-            });
-        });
+    function updateClock() {
+        const clockEl = $('#deviceClock');
+        if (clockEl) {
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
     }
 
     // =========================================================================
@@ -166,123 +132,86 @@
     const promptLabSamples = {
         'summarize': {
             input: "Kotlin Coroutines provide a declarative way to write asynchronous, non-blocking code. By using suspend functions, dispatchers (Dispatchers.IO, Dispatchers.Default, Dispatchers.Main), and structured concurrency with CoroutineScope, developers can prevent memory leaks and coordinate complex parallel tasks seamlessly without callback hell.",
-            output: "### Summary Overview
-- **Core Mechanism**: Non-blocking asynchronous programming via `suspend` functions.
-- **Thread Management**: Clear thread boundaries through Dispatchers (`IO`, `Default`, `Main`).
-- **Reliability**: Structured concurrency guarantees automatic child cancellation and zero memory leaks."
+            output: "### Summary Overview\n- **Core Mechanism**: Non-blocking asynchronous programming via `suspend` functions.\n- **Thread Management**: Clear thread boundaries through Dispatchers (`IO`, `Default`, `Main`).\n- **Reliability**: Structured concurrency guarantees automatic child cancellation and zero memory leaks.",
+            telemetry: "Mode: LOCAL_GGUF • Temperature: 0.7 • Max Tokens: 512"
         },
         'improve': {
             input: "i made a new feature in my app that lets users chat with local models and it saves chats in markdown files so people can open it in obsidian and not lose data.",
-            output: "### Refined Copy
-"Engineered a native on-device AI orchestration feature enabling fully offline local inference. All conversational streams are dual-written as open Markdown documents with structured YAML frontmatter—providing seamless, zero-lock-in integration with Obsidian vaults.""
+            output: "### Refined Copy\n"Engineered a native on-device AI orchestration feature enabling fully offline local inference. All conversational streams are dual-written as open Markdown documents with structured YAML frontmatter—providing seamless, zero-lock-in integration with Obsidian vaults."",
+            telemetry: "Mode: LOCAL_GGUF • Temperature: 0.3 • Max Tokens: 512"
         },
         'explain': {
-            input: "val state by viewModel.uiState.collectAsStateWithLifecycle()
-Text(text = state.userQuery)",
-            output: "### Architectural Breakdown
-1. **`collectAsStateWithLifecycle()`**: Safely collects the `StateFlow` only while the Android Activity/Fragment is at least in the `STARTED` lifecycle state, conserving CPU and battery in the background.
-2. **`by` Delegate**: Unwraps the Compose `State<T>` object into a direct reference, triggering recomposition only when `state.userQuery` value changes."
+            input: "val state by viewModel.uiState.collectAsStateWithLifecycle()\nText(text = state.userQuery)",
+            output: "### Architectural Breakdown\n1. **`collectAsStateWithLifecycle()`**: Safely collects the `StateFlow` only while the Android Activity/Fragment is at least in the `STARTED` lifecycle state, conserving CPU and battery in the background.\n2. **`by` Delegate**: Unwraps the Compose `State<T>` object into a direct reference, triggering recomposition only when `state.userQuery` value changes.",
+            telemetry: "Mode: LOCAL_GGUF • Temperature: 0.2 • Max Tokens: 512"
         }
     };
 
-    function initPromptLab() {
-        const tabs = $$('.lab-tab');
-        const inputArea = $('#labInputText');
-        const outputArea = $('#labOutputArea');
-        const charCounter = $('#labCharCounter');
-        const sampleBtn = $('#labSampleBtn');
-        const executeBtn = $('#labExecuteBtn');
-        const copyOutputBtn = $('#labCopyOutputBtn');
+    let activePromptTool = 'summarize';
 
-        let activeTool = 'summarize';
+    function setPromptLabTool(tool) {
+        if (!promptLabSamples[tool]) return;
+        activePromptTool = tool;
 
-        // Set initial sample
-        if (inputArea) {
-            inputArea.value = promptLabSamples[activeTool].input;
-            if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
-
-            inputArea.addEventListener('input', () => {
-                if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
-            });
-        }
-
-        // Tab Switching
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => {
-                    t.classList.remove('active');
-                    t.setAttribute('aria-selected', 'false');
-                });
-                tab.classList.add('active');
-                tab.setAttribute('aria-selected', 'true');
-                activeTool = tab.dataset.tool;
-
-                if (inputArea && promptLabSamples[activeTool]) {
-                    inputArea.value = promptLabSamples[activeTool].input;
-                    if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
-                }
-            });
+        $$('.lab-tab').forEach(tab => {
+            const isActive = tab.dataset.tool === tool;
+            tab.classList.toggle('active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
 
-        // Load Sample
-        if (sampleBtn) {
-            sampleBtn.addEventListener('click', () => {
-                if (inputArea && promptLabSamples[activeTool]) {
-                    inputArea.value = promptLabSamples[activeTool].input;
-                    if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
-                    showToast(`Loaded sample for ${activeTool.toUpperCase()}`, 'document');
-                }
-            });
+        const inputArea = $('#labInputText');
+        const charCounter = $('#labCharCounter');
+        const telemetryFooter = $('.lab-telemetry-footer');
+
+        if (inputArea) {
+            inputArea.value = promptLabSamples[tool].input;
+            if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
         }
 
-        // Run Transformation (Typewriter Simulation)
-        if (executeBtn && outputArea) {
-            executeBtn.addEventListener('click', () => {
-                const sample = promptLabSamples[activeTool];
-                if (!sample) return;
-
-                executeBtn.disabled = true;
-                outputArea.innerHTML = '<div style="color: var(--brand-orange); font-family: var(--font-mono); font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Processing with local LiteRT / GGUF engine...</div>';
-
-                setTimeout(() => {
-                    outputArea.innerHTML = '';
-                    const fullText = sample.output.replace(/\n/g, '<br>');
-                    let index = 0;
-                    
-                    const interval = setInterval(() => {
-                        index += 8;
-                        outputArea.innerHTML = fullText.slice(0, index) + '<span style="color: var(--brand-orange);">▌</span>';
-                        
-                        if (index >= fullText.length) {
-                            clearInterval(interval);
-                            outputArea.innerHTML = fullText;
-                            executeBtn.disabled = false;
-                            showToast('Transformation completed in 0.42s!', 'bolt');
-                        }
-                    }, 25);
-                }, 400);
-            });
-        }
-
-        // Copy Output
-        if (copyOutputBtn && outputArea) {
-            copyOutputBtn.addEventListener('click', () => {
-                const text = outputArea.innerText;
-                if (text && !text.includes('Select a tool')) {
-                    navigator.clipboard.writeText(text);
-                    showToast('Transformed text copied!', 'copy');
-                } else {
-                    showToast('Run a transformation first!', 'warning');
-                }
-            });
+        if (telemetryFooter) {
+            telemetryFooter.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline; vertical-align:middle; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>${promptLabSamples[tool].telemetry}</span>`;
         }
     }
 
+    function runPromptTransformation() {
+        const sample = promptLabSamples[activePromptTool];
+        const executeBtn = $('#labExecuteBtn');
+        const outputArea = $('#labOutputArea');
+        if (!sample || !outputArea) return;
+
+        if (executeBtn) executeBtn.disabled = true;
+        outputArea.innerHTML = '<div style="color: var(--brand-orange); font-family: var(--font-mono); font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Processing with local LiteRT / GGUF engine...</div>';
+
+        setTimeout(() => {
+            outputArea.innerHTML = '';
+            const fullText = sample.output.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+            let index = 0;
+            
+            const interval = setInterval(() => {
+                index += 8;
+                outputArea.innerHTML = fullText.slice(0, index) + '<span style="color: var(--brand-orange); animation: blinkDot 0.8s infinite;">▌</span>';
+                
+                if (index >= fullText.length) {
+                    clearInterval(interval);
+                    outputArea.innerHTML = fullText;
+                    if (executeBtn) executeBtn.disabled = false;
+                    showToast('Transformation completed in 0.42s!', 'bolt');
+                }
+            }, 25);
+        }, 350);
+    }
+
     // =========================================================================
-    // 5. HuggingFace GGUF Download Simulator
+    // 5. HuggingFace GGUF Download Simulator (HuggingFaceApi.kt)
     // =========================================================================
-    function initHfHubSimulator() {
-        const downloadBtns = $$('.btn-download-model');
+    let isDownloadingModel = false;
+
+    function startModelDownload(modelName) {
+        if (isDownloadingModel) {
+            showToast('Download currently in progress...', 'clock');
+            return;
+        }
+
         const simCard = $('#downloadSimulationCard');
         const simModelName = $('#simModelName');
         const simStatus = $('#simStatus');
@@ -290,45 +219,34 @@ Text(text = state.userQuery)",
         const simProgressBar = $('#simProgressBar');
         const simPercent = $('#simPercent');
 
-        let isDownloading = false;
+        isDownloadingModel = true;
 
-        downloadBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (isDownloading) {
-                    showToast('Download currently in progress...', 'clock');
-                    return;
-                }
+        if (simModelName) simModelName.textContent = modelName;
+        if (simStatus) simStatus.textContent = 'Streaming from HuggingFace...';
+        if (simProgressBar) simProgressBar.style.width = '0%';
+        if (simPercent) simPercent.textContent = '0%';
 
-                const model = btn.dataset.model || 'model-Q4_K_M.gguf';
-                isDownloading = true;
+        if (simCard) {
+            simCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
 
-                if (simModelName) simModelName.textContent = model;
-                if (simStatus) simStatus.textContent = 'Streaming from HuggingFace...';
-                if (simProgressBar) simProgressBar.style.width = '0%';
-                if (simPercent) simPercent.textContent = '0%';
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.floor(Math.random() * 9) + 5;
+            const speed = (Math.random() * 8 + 14).toFixed(1);
 
-                // Scroll to widget smoothly
-                simCard?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (simProgressBar) simProgressBar.style.width = `${Math.min(progress, 100)}%`;
+            if (simPercent) simPercent.textContent = `${Math.min(progress, 100)}%`;
+            if (simSpeed) simSpeed.textContent = `${speed} MB/s`;
 
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += Math.floor(Math.random() * 8) + 4;
-                    const speed = (Math.random() * 8 + 14).toFixed(1);
-
-                    if (simProgressBar) simProgressBar.style.width = `${Math.min(progress, 100)}%`;
-                    if (simPercent) simPercent.textContent = `${Math.min(progress, 100)}%`;
-                    if (simSpeed) simSpeed.textContent = `${speed} MB/s`;
-
-                    if (progress >= 100) {
-                        clearInterval(interval);
-                        isDownloading = false;
-                        if (simStatus) simStatus.textContent = 'Saved to Documents/Oorty/models/';
-                        if (simSpeed) simSpeed.textContent = 'Done';
-                        showToast(`Successfully saved ${model} to vault!`, 'check');
-                    }
-                }, 180);
-            });
-        });
+            if (progress >= 100) {
+                clearInterval(interval);
+                isDownloadingModel = false;
+                if (simStatus) simStatus.textContent = 'Saved to Documents/Oorty/models/';
+                if (simSpeed) simSpeed.textContent = 'Done';
+                showToast(`Successfully saved ${modelName} to vault!`, 'check');
+            }
+        }, 160);
     }
 
     // =========================================================================
@@ -341,7 +259,7 @@ Text(text = state.userQuery)",
             badgeClass: 'badge-safe',
             badgeText: 'Comfortable Fit',
             explanation: 'Perfect for 4GB RAM devices. Operates with near-zero background pressure and achieves the highest decode speeds (35+ tok/s).',
-            gaugeVal: '~450 MB / 4,096 MB (11%)',
+            gaugeVal: '~450 MB / 4,096 MB (11.0%)',
             gaugePercent: '11%',
             gaugeColor: 'fill-green',
             speed: '~35 tok/s',
@@ -397,8 +315,14 @@ Text(text = state.userQuery)",
         }
     };
 
-    function initRamCalculator() {
-        const ramBtns = $$('.ram-btn');
+    function setRamProfile(ramKey) {
+        const profile = ramProfiles[ramKey];
+        if (!profile) return;
+
+        $$('.ram-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.ram === ramKey);
+        });
+
         const titleEl = $('#calcModelTitle');
         const quantEl = $('#calcQuantTag');
         const badgeEl = $('#calcSafetyBadge');
@@ -410,87 +334,56 @@ Text(text = state.userQuery)",
         const agenticEl = $('#calcAgenticVal');
         const riskEl = $('#calcRiskVal');
 
-        ramBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                ramBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                const ram = btn.dataset.ram;
-                const profile = ramProfiles[ram];
-                if (!profile) return;
-
-                if (titleEl) titleEl.textContent = profile.title;
-                if (quantEl) quantEl.textContent = profile.quant;
-                if (expEl) expEl.textContent = profile.explanation;
-                if (gaugeValEl) gaugeValEl.textContent = profile.gaugeVal;
-                if (gaugeFillEl) {
-                    gaugeFillEl.style.width = profile.gaugePercent;
-                    gaugeFillEl.className = `gauge-bar-fill ${profile.gaugeColor}`;
-                }
-                if (badgeEl) {
-                    badgeEl.className = `ram-safety-badge ${profile.badgeClass}`;
-                    badgeEl.innerHTML = `<span class="badge-dot-svg"></span><span>${profile.badgeText}</span>`;
-                }
-                if (speedEl) speedEl.textContent = profile.speed;
-                if (contextEl) contextEl.textContent = profile.context;
-                if (agenticEl) agenticEl.textContent = profile.agentic;
-                if (riskEl) {
-                    riskEl.textContent = profile.risk;
-                    riskEl.className = `metric-value ${profile.riskClass}`;
-                }
-            });
-        });
+        if (titleEl) titleEl.textContent = profile.title;
+        if (quantEl) quantEl.textContent = profile.quant;
+        if (expEl) expEl.textContent = profile.explanation;
+        if (gaugeValEl) gaugeValEl.textContent = profile.gaugeVal;
+        if (gaugeFillEl) {
+            gaugeFillEl.style.width = profile.gaugePercent;
+            gaugeFillEl.className = `gauge-bar-fill ${profile.gaugeColor}`;
+        }
+        if (badgeEl) {
+            badgeEl.className = `ram-safety-badge ${profile.badgeClass}`;
+            badgeEl.innerHTML = `<span class="badge-dot-svg"></span><span>${profile.badgeText}</span>`;
+        }
+        if (speedEl) speedEl.textContent = profile.speed;
+        if (contextEl) contextEl.textContent = profile.context;
+        if (agenticEl) agenticEl.textContent = profile.agentic;
+        if (riskEl) {
+            riskEl.textContent = profile.risk;
+            riskEl.className = `metric-value ${profile.riskClass}`;
+        }
     }
 
     // =========================================================================
     // 7. Obsidian Split View (Raw Markdown vs Rendered)
     // =========================================================================
-    function initObsidianViewer() {
+    function setObsidianTab(viewMode) {
+        const isRaw = viewMode === 'raw';
         const btnRaw = $('#btnRawMd');
         const btnRendered = $('#btnRenderedMd');
         const paneRaw = $('#paneRawMd');
         const paneRendered = $('#paneRenderedMd');
-        const copyNoteBtn = $('#btnCopyNote');
 
-        if (btnRaw && btnRendered && paneRaw && paneRendered) {
-            btnRaw.addEventListener('click', () => {
-                btnRaw.classList.add('active');
-                btnRaw.setAttribute('aria-selected', 'true');
-                btnRendered.classList.remove('active');
-                btnRendered.setAttribute('aria-selected', 'false');
-                paneRaw.classList.add('active');
-                paneRendered.classList.remove('active');
-            });
-
-            btnRendered.addEventListener('click', () => {
-                btnRendered.classList.add('active');
-                btnRendered.setAttribute('aria-selected', 'true');
-                btnRaw.classList.remove('active');
-                btnRaw.setAttribute('aria-selected', 'false');
-                paneRendered.classList.add('active');
-                paneRaw.classList.remove('active');
-            });
+        if (btnRaw) {
+            btnRaw.classList.toggle('active', isRaw);
+            btnRaw.setAttribute('aria-selected', isRaw ? 'true' : 'false');
         }
-
-        if (copyNoteBtn) {
-            copyNoteBtn.addEventListener('click', () => {
-                const rawCode = paneRaw?.querySelector('code')?.innerText;
-                if (rawCode) {
-                    navigator.clipboard.writeText(rawCode);
-                    showToast('Obsidian Markdown note copied!', 'copy');
-                }
-            });
+        if (btnRendered) {
+            btnRendered.classList.toggle('active', !isRaw);
+            btnRendered.setAttribute('aria-selected', !isRaw ? 'true' : 'false');
         }
+        if (paneRaw) paneRaw.classList.toggle('active', isRaw);
+        if (paneRendered) paneRendered.classList.toggle('active', !isRaw);
     }
 
     // =========================================================================
-    // 8. MCP Agent Simulator
+    // 8. MCP Agent Simulator (ToolCallOrchestrator.kt)
     // =========================================================================
-    function initMcpSimulator() {
+    function runMcpAgentSimulation() {
         const runBtn = $('#btnSimulateMcpRun');
         const logsBox = $('#traceLogsBox');
         const badge = $('#traceBadge');
-
         if (!runBtn || !logsBox) return;
 
         const traceSteps = [
@@ -504,144 +397,275 @@ Text(text = state.userQuery)",
             '[DONE] Agent loop finished in 2 iterations (0.88s total runtime).'
         ];
 
-        runBtn.addEventListener('click', () => {
-            runBtn.disabled = true;
-            if (badge) {
-                badge.className = 'trace-badge-running';
-                badge.textContent = 'Running...';
-            }
-            logsBox.innerHTML = '';
+        runBtn.disabled = true;
+        if (badge) {
+            badge.className = 'trace-badge-running';
+            badge.textContent = 'Running...';
+        }
+        logsBox.innerHTML = '';
 
-            let stepIndex = 0;
-            const interval = setInterval(() => {
-                if (stepIndex < traceSteps.length) {
-                    const row = document.createElement('div');
-                    row.className = 'trace-item';
-                    row.style.color = stepIndex === traceSteps.length - 1 ? '#22C55E' : '#D4D4D8';
-                    row.textContent = traceSteps[stepIndex];
-                    logsBox.appendChild(row);
-                    logsBox.scrollTop = logsBox.scrollHeight;
-                    stepIndex++;
-                } else {
-                    clearInterval(interval);
-                    runBtn.disabled = false;
-                    if (badge) {
-                        badge.className = 'trace-badge-idle';
-                        badge.textContent = 'Completed';
-                    }
-                    showToast('MCP Agent simulation finished!', 'wrench');
+        let stepIndex = 0;
+        const interval = setInterval(() => {
+            if (stepIndex < traceSteps.length) {
+                const row = document.createElement('div');
+                row.className = 'trace-item';
+                row.style.color = stepIndex === traceSteps.length - 1 ? '#22C55E' : '#D4D4D8';
+                row.textContent = traceSteps[stepIndex];
+                logsBox.appendChild(row);
+                logsBox.scrollTop = logsBox.scrollHeight;
+                stepIndex++;
+            } else {
+                clearInterval(interval);
+                runBtn.disabled = false;
+                if (badge) {
+                    badge.className = 'trace-badge-idle';
+                    badge.textContent = 'Completed';
                 }
-            }, 350);
-        });
+                showToast('MCP Agent simulation finished!', 'wrench');
+            }
+        }, 300);
     }
 
     // =========================================================================
     // 9. Architecture & Code Tab Switcher
     // =========================================================================
-    function initCodeTabs() {
-        const tabs = $$('.code-tab-btn');
-        const contents = $$('.code-tab-content');
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const codeId = tab.dataset.code;
-
-                tabs.forEach(t => {
-                    t.classList.toggle('active', t === tab);
-                    t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
-                });
-                contents.forEach(c => c.classList.toggle('active', c.id === `tab-code-${codeId}`));
-            });
+    function setCodeTab(codeKey) {
+        $$('.code-tab-btn').forEach(btn => {
+            const isActive = btn.dataset.code === codeKey;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
 
-        $$('.btn-copy-code').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetSel = btn.dataset.target;
-                const codeEl = targetSel ? $(targetSel) : btn.closest('.code-header')?.nextElementSibling;
-                if (codeEl) {
-                    navigator.clipboard.writeText(codeEl.innerText);
-                    showToast('Code snippet copied!', 'copy');
-                }
-            });
+        $$('.code-tab-content').forEach(content => {
+            content.classList.toggle('active', content.id === `tab-code-${codeKey}`);
         });
     }
 
     // =========================================================================
-    // 10. FAQ Search & Accordion
+    // 10. Global Document Event Delegation (Never Misses Clicks)
     // =========================================================================
-    function initFaqSearch() {
-        const searchInput = $('#faqInput');
-        const faqCards = $$('.faq-card');
+    function setupEventDelegation() {
+        document.addEventListener('click', (e) => {
+            // Theme Toggle
+            const themeBtn = e.target.closest('#themeToggle');
+            if (themeBtn) {
+                e.preventDefault();
+                toggleTheme();
+                return;
+            }
 
-        if (!searchInput) return;
+            // Mobile Drawer Toggle / Close
+            const hamburger = e.target.closest('#hamburger');
+            if (hamburger) {
+                e.preventDefault();
+                openDrawer();
+                return;
+            }
 
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
+            const closeDrawerBtn = e.target.closest('#drawerClose') || e.target.closest('.drawer-link');
+            if (closeDrawerBtn) {
+                closeDrawer();
+                return;
+            }
 
-            faqCards.forEach(card => {
-                const text = card.textContent.toLowerCase();
-                const matches = text.includes(query);
-                card.style.display = matches ? 'block' : 'none';
-                if (query && matches) {
-                    card.setAttribute('open', '');
-                } else if (!query) {
-                    card.removeAttribute('open');
+            // RAM Matrix Buttons (4GB, 6GB, 8GB, 12GB+)
+            const ramBtn = e.target.closest('.ram-btn');
+            if (ramBtn) {
+                e.preventDefault();
+                const ram = ramBtn.dataset.ram;
+                if (ram) setRamProfile(ram);
+                return;
+            }
+
+            // Prompt Lab Tool Tabs (Summarize, Improve, Explain)
+            const labTab = e.target.closest('.lab-tab');
+            if (labTab) {
+                e.preventDefault();
+                const tool = labTab.dataset.tool;
+                if (tool) setPromptLabTool(tool);
+                return;
+            }
+
+            // Prompt Lab Load Sample
+            const sampleBtn = e.target.closest('#labSampleBtn');
+            if (sampleBtn) {
+                e.preventDefault();
+                const sample = promptLabSamples[activePromptTool];
+                const inputArea = $('#labInputText');
+                const charCounter = $('#labCharCounter');
+                if (sample && inputArea) {
+                    inputArea.value = sample.input;
+                    if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
+                    showToast(`Loaded sample for ${activePromptTool.toUpperCase()}`, 'document');
                 }
-            });
-        });
-    }
+                return;
+            }
 
-    // =========================================================================
-    // 11. Scroll Animations (IntersectionObserver)
-    // =========================================================================
-    function initScrollAnimations() {
-        const elements = $$('.fade-in');
-        if (!elements.length) return;
+            // Prompt Lab Run Transformation
+            const runTransformBtn = e.target.closest('#labExecuteBtn');
+            if (runTransformBtn) {
+                e.preventDefault();
+                runPromptTransformation();
+                return;
+            }
 
-        // Reveal all visible elements immediately
-        elements.forEach(el => {
-            const rect = el.getBoundingClientRect();
-            if (rect.top < window.innerHeight) {
-                el.classList.add('visible');
+            // Prompt Lab Copy Output
+            const copyOutputBtn = e.target.closest('#labCopyOutputBtn');
+            if (copyOutputBtn) {
+                e.preventDefault();
+                const outputArea = $('#labOutputArea');
+                const text = outputArea ? outputArea.innerText : '';
+                if (text && !text.includes('Select a tool')) {
+                    navigator.clipboard.writeText(text);
+                    showToast('Transformed text copied to clipboard!', 'copy');
+                } else {
+                    showToast('Run a transformation first!', 'warning');
+                }
+                return;
+            }
+
+            // HuggingFace Model Card Download Buttons
+            const downloadModelBtn = e.target.closest('.btn-download-model');
+            if (downloadModelBtn) {
+                e.preventDefault();
+                const model = downloadModelBtn.dataset.model || 'model-Q4_K_M.gguf';
+                startModelDownload(model);
+                return;
+            }
+
+            // In-Phone Simulator Tabs
+            const phoneTab = e.target.closest('.mode-tab-btn');
+            if (phoneTab) {
+                e.preventDefault();
+                const mode = phoneTab.dataset.mode;
+                if (mode) setPhoneMode(mode);
+                return;
+            }
+
+            // Obsidian Raw / Rendered Tabs
+            const rawTab = e.target.closest('#btnRawMd');
+            if (rawTab) {
+                e.preventDefault();
+                setObsidianTab('raw');
+                return;
+            }
+            const renderedTab = e.target.closest('#btnRenderedMd');
+            if (renderedTab) {
+                e.preventDefault();
+                setObsidianTab('rendered');
+                return;
+            }
+
+            // Copy Obsidian Note Button
+            const copyNoteBtn = e.target.closest('#btnCopyNote');
+            if (copyNoteBtn) {
+                e.preventDefault();
+                const rawCode = $('#paneRawMd')?.querySelector('code')?.innerText;
+                if (rawCode) {
+                    navigator.clipboard.writeText(rawCode);
+                    showToast('Obsidian Markdown note copied!', 'copy');
+                }
+                return;
+            }
+
+            // Code Architecture Tabs
+            const codeTab = e.target.closest('.code-tab-btn');
+            if (codeTab) {
+                e.preventDefault();
+                const codeKey = codeTab.dataset.code;
+                if (codeKey) setCodeTab(codeKey);
+                return;
+            }
+
+            // Generic Snippet Copy Buttons
+            const copySnippetBtn = e.target.closest('.btn-copy-code');
+            if (copySnippetBtn) {
+                e.preventDefault();
+                const text = copySnippetBtn.dataset.copy || 
+                             (copySnippetBtn.dataset.target ? $(copySnippetBtn.dataset.target)?.innerText : '') ||
+                             copySnippetBtn.closest('.code-snippet-box, .code-tab-content')?.querySelector('pre, code')?.innerText;
+                if (text) {
+                    navigator.clipboard.writeText(text);
+                    showToast('Snippet copied to clipboard!', 'copy');
+                }
+                return;
+            }
+
+            // Run MCP Agent Simulation Button
+            const mcpRunBtn = e.target.closest('#btnSimulateMcpRun');
+            if (mcpRunBtn) {
+                e.preventDefault();
+                runMcpAgentSimulation();
+                return;
+            }
+
+            // Smooth Scroll for CTA Buttons & Internal Anchor Links
+            const anchor = e.target.closest('a[href^="#"]');
+            if (anchor) {
+                const targetId = anchor.getAttribute('href');
+                if (targetId && targetId !== '#') {
+                    const targetEl = $(targetId);
+                    if (targetEl) {
+                        e.preventDefault();
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
             }
         });
 
-        if ('IntersectionObserver' in window) {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
+        // Textarea live character counter
+        const inputArea = $('#labInputText');
+        const charCounter = $('#labCharCounter');
+        if (inputArea && charCounter) {
+            inputArea.addEventListener('input', () => {
+                charCounter.textContent = `${inputArea.value.length} characters`;
+            });
+        }
+
+        // FAQ real-time search filter
+        const searchInput = $('#faqInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                $$('.faq-card').forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    const matches = text.includes(query);
+                    card.style.display = matches ? 'block' : 'none';
+                    if (query && matches) {
+                        card.setAttribute('open', '');
+                    } else if (!query) {
+                        card.removeAttribute('open');
                     }
                 });
-            }, { threshold: 0.08 });
-
-            elements.forEach(el => observer.observe(el));
-        } else {
-            elements.forEach(el => el.classList.add('visible'));
+            });
         }
     }
 
     // =========================================================================
-    // Bootstrap / Initialization Safe Check
+    // Initialization Bootstrap
     // =========================================================================
-    function initAll() {
+    function initApp() {
         initTheme();
-        initMobileNav();
-        initPhoneSimulator();
-        initPromptLab();
-        initHfHubSimulator();
-        initRamCalculator();
-        initObsidianViewer();
-        initMcpSimulator();
-        initCodeTabs();
-        initFaqSearch();
-        initScrollAnimations();
+        updateClock();
+        setInterval(updateClock, 30000);
+        setupEventDelegation();
+
+        // Initial setup for Prompt Lab
+        const inputArea = $('#labInputText');
+        const charCounter = $('#labCharCounter');
+        if (inputArea && promptLabSamples[activePromptTool]) {
+            inputArea.value = promptLabSamples[activePromptTool].input;
+            if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
+        }
+
+        // Initial RAM Matrix setup (default 6GB)
+        setRamProfile('6');
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initAll);
+        document.addEventListener('DOMContentLoaded', initApp);
     } else {
-        initAll();
+        initApp();
     }
 
 })();

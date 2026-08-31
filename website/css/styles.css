@@ -135,12 +135,18 @@ img, svg {
     user-select: none;
 }
 
+/* Prevent inner elements from swallowing click events */
+button > *, a > * {
+    pointer-events: none;
+}
+
 a {
     color: inherit;
     text-decoration: none;
     transition: color var(--transition-fast), transform var(--transition-fast);
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    cursor: pointer;
 }
 
 button, input, textarea, select {
@@ -2266,7 +2272,7 @@ p, span, li, a {
     to { transform: translateX(0); opacity: 1; }
 }
 
-/* ---------- Animations & Scroll Effects ---------- */
+/* ---------- Animations & Universal Visibility ---------- */
 .fade-in {
     opacity: 1;
     transform: translateY(0);
