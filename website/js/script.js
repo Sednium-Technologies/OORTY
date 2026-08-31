@@ -40,7 +40,6 @@
         
         // Retrieve saved theme or default to dark
         const savedTheme = localStorage.getItem('oorty-theme') || 'dark';
-            
         root.setAttribute('data-theme', savedTheme);
 
         if (toggleBtn) {
@@ -65,8 +64,16 @@
 
         if (!hamburger || !drawer) return;
 
-        const openDrawer = () => drawer.classList.add('open');
-        const closeDrawer = () => drawer.classList.remove('open');
+        const openDrawer = () => {
+            drawer.classList.add('open');
+            drawer.setAttribute('aria-hidden', 'false');
+            hamburger.setAttribute('aria-expanded', 'true');
+        };
+        const closeDrawer = () => {
+            drawer.classList.remove('open');
+            drawer.setAttribute('aria-hidden', 'true');
+            hamburger.setAttribute('aria-expanded', 'false');
+        };
 
         hamburger.addEventListener('click', openDrawer);
         if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
@@ -181,8 +188,12 @@
         // Tab Switching
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
                 tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
                 activeTool = tab.dataset.tool;
 
                 if (inputArea && promptLabSamples[activeTool]) {
@@ -427,14 +438,18 @@
         if (btnRaw && btnRendered && paneRaw && paneRendered) {
             btnRaw.addEventListener('click', () => {
                 btnRaw.classList.add('active');
+                btnRaw.setAttribute('aria-selected', 'true');
                 btnRendered.classList.remove('active');
+                btnRendered.setAttribute('aria-selected', 'false');
                 paneRaw.classList.add('active');
                 paneRendered.classList.remove('active');
             });
 
             btnRendered.addEventListener('click', () => {
                 btnRendered.classList.add('active');
+                btnRendered.setAttribute('aria-selected', 'true');
                 btnRaw.classList.remove('active');
+                btnRaw.setAttribute('aria-selected', 'false');
                 paneRendered.classList.add('active');
                 paneRaw.classList.remove('active');
             });
@@ -514,7 +529,10 @@
             tab.addEventListener('click', () => {
                 const codeId = tab.dataset.code;
 
-                tabs.forEach(t => t.classList.toggle('active', t === tab));
+                tabs.forEach(t => {
+                    t.classList.toggle('active', t === tab);
+                    t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+                });
                 contents.forEach(c => c.classList.toggle('active', c.id === `tab-code-${codeId}`));
             });
         });
