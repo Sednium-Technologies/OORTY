@@ -189,7 +189,10 @@
                                 <span class="device-clock" id="deviceClock">19:42</span>
                                 <div class="status-icons">
                                     <span class="signal-badge">5G</span>
-                                    <span class="battery-pill">&#9679; 100%</span>
+                                    <span class="battery-pill">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:inline; vertical-align:middle; margin-right:2px;"><circle cx="12" cy="12" r="10"/></svg>
+                                        100%
+                                    </span>
                                 </div>
                             </div>
 
@@ -212,11 +215,26 @@
 
                             <!-- Mode Selector Tabs inside Phone -->
                             <div class="phone-mode-tabs" role="tablist" aria-label="Phone Demonstration Modes">
-                                <button class="mode-tab-btn active" data-mode="gguf" role="tab" aria-selected="true">&#9889; GGUF</button>
-                                <button class="mode-tab-btn" data-mode="thinking" role="tab" aria-selected="false">&#129504; Thinking</button>
-                                <button class="mode-tab-btn" data-mode="vault" role="tab" aria-selected="false">&#128211; Vault</button>
-                                <button class="mode-tab-btn" data-mode="mcp" role="tab" aria-selected="false">&#128736; MCP</button>
-                                <button class="mode-tab-btn" data-mode="cloud" role="tab" aria-selected="false">&#9729; Cloud</button>
+                                <button class="mode-tab-btn active" data-mode="gguf" role="tab" aria-selected="true">
+                                    <svg class="mode-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                    <span>GGUF</span>
+                                </button>
+                                <button class="mode-tab-btn" data-mode="thinking" role="tab" aria-selected="false">
+                                    <svg class="mode-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 0 1 5 5c0 1.5-.7 2.8-1.7 3.7.8.6 1.4 1.4 1.7 2.3A4.5 4.5 0 0 1 12 18a4.5 4.5 0 0 1-5-5c.3-.9.9-1.7 1.7-2.3C7.7 9.8 7 8.5 7 7a5 5 0 0 1 5-5z"/><path d="M9 22h6"/></svg>
+                                    <span>Thinking</span>
+                                </button>
+                                <button class="mode-tab-btn" data-mode="vault" role="tab" aria-selected="false">
+                                    <svg class="mode-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                    <span>Vault</span>
+                                </button>
+                                <button class="mode-tab-btn" data-mode="mcp" role="tab" aria-selected="false">
+                                    <svg class="mode-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                                    <span>MCP</span>
+                                </button>
+                                <button class="mode-tab-btn" data-mode="cloud" role="tab" aria-selected="false">
+                                    <svg class="mode-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
+                                    <span>Cloud</span>
+                                </button>
                             </div>
 
                             <!-- Phone Scrollable Messages Viewport -->
@@ -269,7 +287,10 @@ fun CounterScreen(viewModel: CounterViewModel) {
                                             </div>
                                             <!-- Collapsible Thought Accordion -->
                                             <details class="thought-accordion" open>
-                                                <summary class="thought-summary">&#129504; Thought Process (148 tokens)</summary>
+                                                <summary class="thought-summary">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M12 2a5 5 0 0 1 5 5c0 1.5-.7 2.8-1.7 3.7.8.6 1.4 1.4 1.7 2.3A4.5 4.5 0 0 1 12 18a4.5 4.5 0 0 1-5-5c.3-.9.9-1.7 1.7-2.3C7.7 9.8 7 8.5 7 7a5 5 0 0 1 5-5z"/><path d="M9 22h6"/></svg>
+                                                    Thought Process (148 tokens)
+                                                </summary>
                                                 <div class="thought-body">
                                                     &gt; Branching factor $b$, maximum depth $d$.<br>
                                                     &gt; If heuristic $h(n)$ is consistent: $O(b^d)$.<br>
@@ -376,20 +397,55 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
                 <div class="strip-heading">UNIFYING NATIVE ON-DEVICE HARDWARE & CLOUD FRONTIER MODELS</div>
                 <div class="strip-items-marquee">
                     <div class="marquee-track">
-                        <span class="eco-pill">&#9889; llama.cpp GGUF Engine</span>
-                        <span class="eco-pill">&#128241; Google LiteRT (TensorFlow Lite)</span>
-                        <span class="eco-pill">&#128211; Obsidian Markdown Vault</span>
-                        <span class="eco-pill">&#128736; Model Context Protocol (MCP)</span>
-                        <span class="eco-pill">&#128309; Gemini 2.5 Flash / Pro</span>
-                        <span class="eco-pill">&#128994; Anthropic Claude 3.7</span>
-                        <span class="eco-pill">&#9889; Groq Ultra-Fast LPU</span>
-                        <span class="eco-pill">&#128154; NVIDIA NIM Accelerated</span>
-                        <!-- Duplicate for infinite seamless scroll -->
-                        <span class="eco-pill">&#9889; llama.cpp GGUF Engine</span>
-                        <span class="eco-pill">&#128241; Google LiteRT (TensorFlow Lite)</span>
-                        <span class="eco-pill">&#128211; Obsidian Markdown Vault</span>
-                        <span class="eco-pill">&#128736; Model Context Protocol (MCP)</span>
-                        <span class="eco-pill">&#128309; Gemini 2.5 Flash / Pro</span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <span>llama.cpp GGUF Engine</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                            <span>Google LiteRT (TensorFlow Lite)</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                            <span>Obsidian Markdown Vault</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            <span>Model Context Protocol (MCP)</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/></svg>
+                            <span>Gemini 2.5 Flash / Pro</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                            <span>Anthropic Claude 3.7</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <span>Groq Ultra-Fast LPU</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><path d="M7 12h10M12 7v10"/></svg>
+                            <span>NVIDIA NIM Accelerated</span>
+                        </span>
+                        <!-- Marquee Duplicates for infinite seamless loop -->
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <span>llama.cpp GGUF Engine</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                            <span>Google LiteRT (TensorFlow Lite)</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                            <span>Obsidian Markdown Vault</span>
+                        </span>
+                        <span class="eco-pill">
+                            <svg class="eco-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            <span>Model Context Protocol (MCP)</span>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -408,21 +464,27 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
                     <!-- Tool Selector -->
                     <div class="lab-tool-selector" role="tablist">
                         <button class="lab-tab active" data-tool="summarize" role="tab" aria-selected="true">
-                            <span class="lab-tab-icon">&#128221;</span>
+                            <div class="lab-tab-icon-box">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            </div>
                             <div class="lab-tab-text">
                                 <strong>Summarize</strong>
                                 <span>Key takeaway extraction</span>
                             </div>
                         </button>
                         <button class="lab-tab" data-tool="improve" role="tab" aria-selected="false">
-                            <span class="lab-tab-icon">&#9997;&#65039;</span>
+                            <div class="lab-tab-icon-box">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                            </div>
                             <div class="lab-tab-text">
                                 <strong>Improve Writing</strong>
                                 <span>Clarity, flow & impact</span>
                             </div>
                         </button>
                         <button class="lab-tab" data-tool="explain" role="tab" aria-selected="false">
-                            <span class="lab-tab-icon">&#128187;</span>
+                            <div class="lab-tab-icon-box">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            </div>
                             <div class="lab-tab-text">
                                 <strong>Explain Code</strong>
                                 <span>Deep architectural analysis</span>
@@ -443,7 +505,7 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
                                 <span class="char-counter" id="labCharCounter">0 characters</span>
                                 <button class="btn btn-primary btn-sm shine-effect" id="labExecuteBtn">
                                     <span>Run Transformation</span>
-                                    <span class="btn-arrow">&blacktriangleright;</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                                 </button>
                             </div>
                         </div>
@@ -456,12 +518,13 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
                             </div>
                             <div class="lab-output-display" id="labOutputArea">
                                 <div class="output-placeholder">
-                                    <span class="pulse-icon">&#10024;</span>
+                                    <svg class="pulse-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                                     <p>Select a tool and click "Run Transformation" to view the generated output.</p>
                                 </div>
                             </div>
                             <div class="panel-footer lab-telemetry-footer">
-                                <span>&#9889; Mode: LOCAL_GGUF &bull; Temperature: 0.7</span>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline; vertical-align:middle; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                <span>Mode: LOCAL_GGUF &bull; Temperature: 0.7</span>
                             </div>
                         </div>
                     </div>
@@ -500,7 +563,10 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
 
                     <!-- Model Card 2 (Recommended) -->
                     <div class="hf-card featured">
-                        <div class="hf-badge-popular">&starf; Recommended</div>
+                        <div class="hf-badge-popular">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:inline; vertical-align:middle; margin-right:3px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            Recommended
+                        </div>
                         <div class="hf-card-top">
                             <span class="hf-tag tag-balanced">Balanced</span>
                             <span class="hf-size">780 MB</span>
@@ -557,7 +623,10 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
                 <!-- In-App Download Simulation Widget -->
                 <div class="download-simulation-card fade-in" id="downloadSimulationCard">
                     <div class="sim-header">
-                        <div class="sim-title">&#9889; In-App HuggingFace Download Pipeline (<code>HuggingFaceApi.kt</code>)</div>
+                        <div class="sim-title">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline; vertical-align:middle; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <span>In-App HuggingFace Download Pipeline (<code>HuggingFaceApi.kt</code>)</span>
+                        </div>
                         <span class="sim-status" id="simStatus">Ready</span>
                     </div>
                     <div class="sim-meta-row">
@@ -599,7 +668,7 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
                                 <span class="ram-quant-tag" id="calcQuantTag">Quant: Q4_K_M &bull; ~850 MB VRAM</span>
                             </div>
                             <div class="ram-safety-badge badge-safe" id="calcSafetyBadge">
-                                <span class="badge-icon">&#128994;</span>
+                                <span class="badge-dot-svg"></span>
                                 <span>Comfortable Fit</span>
                             </div>
                         </div>
@@ -629,7 +698,7 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
                             </div>
                             <div class="metric-card">
                                 <span class="metric-label">Agentic Rating</span>
-                                <strong class="metric-value" id="calcAgenticVal">&#9889; Limited (Fast)</strong>
+                                <strong class="metric-value" id="calcAgenticVal">Limited (Fast)</strong>
                             </div>
                             <div class="metric-card">
                                 <span class="metric-label">Crash Risk</span>
@@ -652,37 +721,49 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
 
                 <div class="features-card-grid fade-in">
                     <div class="feat-card">
-                        <div class="feat-icon-box">&#9889;</div>
+                        <div class="feat-icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        </div>
                         <h3>Native llama.cpp JNI Engine</h3>
                         <p>Zero Python, zero Node.js daemon overhead. High-performance C++ bindings via <code>llamacpp-kotlin</code> executing direct ARM NEON & Vulkan instructions.</p>
                     </div>
 
                     <div class="feat-card">
-                        <div class="feat-icon-box">&#128211;</div>
+                        <div class="feat-icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        </div>
                         <h3>Obsidian Markdown Dual-Write</h3>
                         <p>Every chat turn is automatically formatted into clean Markdown with YAML frontmatter tags and saved directly to your local documents folder.</p>
                     </div>
 
                     <div class="feat-card">
-                        <div class="feat-icon-box">&#128736;</div>
+                        <div class="feat-icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                        </div>
                         <h3>Model Context Protocol (MCP)</h3>
                         <p>Run multi-server tool loops with strict JSON schema validation, human approval prompts, and local SQLite query execution.</p>
                     </div>
 
                     <div class="feat-card">
-                        <div class="feat-icon-box">&#128274;</div>
+                        <div class="feat-icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
                         <h3>Zero Telemetry & 100% Offline</h3>
                         <p>Your chats, memory embeddings, and API keys never leave your phone. Works seamlessly in airplane mode without internet connectivity.</p>
                     </div>
 
                     <div class="feat-card">
-                        <div class="feat-icon-box">&#129504;</div>
+                        <div class="feat-icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/></svg>
+                        </div>
                         <h3>Real-Time Reasoning Parser</h3>
                         <p>Streaming <code>&lt;think&gt;</code> token parser dynamically hides/reveals model reasoning accordions without blocking generation flow.</p>
                     </div>
 
                     <div class="feat-card">
-                        <div class="feat-icon-box">&#128309;</div>
+                        <div class="feat-icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
+                        </div>
                         <h3>Multi-Cloud Router (BYOK)</h3>
                         <p>Bring your own API keys for Google Gemini 2.5, Claude 3.7, OpenAI, Groq, Mistral, and NVIDIA NIM with zero subscription fees.</p>
                     </div>
@@ -702,21 +783,27 @@ Use `collectAsStateWithLifecycle()`...</code></pre>
                     
                     <div class="obsidian-points-list">
                         <div class="obsidian-point">
-                            <div class="point-icon">&#128203;</div>
+                            <div class="point-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            </div>
                             <div>
                                 <h4>YAML Metadata Frontmatter</h4>
                                 <p>Includes session ID, model name, token timestamps, and auto-generated topic tags.</p>
                             </div>
                         </div>
                         <div class="obsidian-point">
-                            <div class="point-icon">&#128065;</div>
+                            <div class="point-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            </div>
                             <div>
                                 <h4>Direct File System Access</h4>
                                 <p>Open <code>Documents/Oorty/chats/</code> directly in Obsidian, Logseq, VS Code, or Git.</p>
                             </div>
                         </div>
                         <div class="obsidian-point">
-                            <div class="point-icon">&#128279;</div>
+                            <div class="point-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                            </div>
                             <div>
                                 <h4>Bi-directional Wikilinks</h4>
                                 <p>Link ideas across conversations with standard <code>[[note-title]]</code> syntax.</p>
@@ -850,7 +937,7 @@ fun CounterScreen(viewModel: CounterViewModel) {
 
                         <button class="btn btn-primary btn-block shine-effect" id="btnSimulateMcpRun">
                             <span>Execute Sample Agent Loop</span>
-                            <span class="btn-arrow">&blacktriangleright;</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         </button>
                     </div>
 

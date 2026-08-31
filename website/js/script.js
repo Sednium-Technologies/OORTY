@@ -9,14 +9,28 @@
     const $ = (sel, ctx = document) => ctx.querySelector(sel);
     const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
+    // SVG Icon Map for Toasts and Components
+    const SVG_ICONS = {
+        check: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+        copy: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+        moon: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+        sun: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>',
+        bolt: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+        document: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+        clock: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+        warning: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        wrench: '<svg class="toast-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'
+    };
+
     // Toast Notification Dispatcher
-    function showToast(message, icon = '✓') {
+    function showToast(message, iconKey = 'check') {
         const container = $('#toast-container');
         if (!container) return;
         
         const toast = document.createElement('div');
         toast.className = 'toast';
-        toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+        const iconSvg = SVG_ICONS[iconKey] || SVG_ICONS.check;
+        toast.innerHTML = `${iconSvg} <span>${message}</span>`;
         container.appendChild(toast);
 
         setTimeout(() => {
@@ -48,7 +62,7 @@
                 const next = current === 'dark' ? 'light' : 'dark';
                 root.setAttribute('data-theme', next);
                 localStorage.setItem('oorty-theme', next);
-                showToast(`Switched to ${next.toUpperCase()} theme`, next === 'dark' ? '🌙' : '☀️');
+                showToast(`Switched to ${next.toUpperCase()} theme`, next === 'dark' ? 'moon' : 'sun');
             });
         }
     }
@@ -140,7 +154,7 @@
                 const text = btn.dataset.copy || btn.closest('.code-snippet-box')?.querySelector('pre')?.innerText;
                 if (text) {
                     navigator.clipboard.writeText(text);
-                    showToast('Code copied to clipboard!', '📋');
+                    showToast('Code copied to clipboard!', 'copy');
                 }
             });
         });
@@ -152,15 +166,22 @@
     const promptLabSamples = {
         'summarize': {
             input: "Kotlin Coroutines provide a declarative way to write asynchronous, non-blocking code. By using suspend functions, dispatchers (Dispatchers.IO, Dispatchers.Default, Dispatchers.Main), and structured concurrency with CoroutineScope, developers can prevent memory leaks and coordinate complex parallel tasks seamlessly without callback hell.",
-            output: "### 📝 Summary Overview\n- **Core Mechanism**: Non-blocking asynchronous programming via `suspend` functions.\n- **Thread Management**: Clear thread boundaries through Dispatchers (`IO`, `Default`, `Main`).\n- **Reliability**: Structured concurrency guarantees automatic child cancellation and zero memory leaks."
+            output: "### Summary Overview
+- **Core Mechanism**: Non-blocking asynchronous programming via `suspend` functions.
+- **Thread Management**: Clear thread boundaries through Dispatchers (`IO`, `Default`, `Main`).
+- **Reliability**: Structured concurrency guarantees automatic child cancellation and zero memory leaks."
         },
         'improve': {
             input: "i made a new feature in my app that lets users chat with local models and it saves chats in markdown files so people can open it in obsidian and not lose data.",
-            output: "### ✍️ Refined Copy\n\"Engineered a native on-device AI orchestration feature enabling fully offline local inference. All conversational streams are dual-written as open Markdown documents with structured YAML frontmatter—providing seamless, zero-lock-in integration with Obsidian vaults.\""
+            output: "### Refined Copy
+"Engineered a native on-device AI orchestration feature enabling fully offline local inference. All conversational streams are dual-written as open Markdown documents with structured YAML frontmatter—providing seamless, zero-lock-in integration with Obsidian vaults.""
         },
         'explain': {
-            input: "val state by viewModel.uiState.collectAsStateWithLifecycle()\nText(text = state.userQuery)",
-            output: "### 💻 Architectural Breakdown\n1. **`collectAsStateWithLifecycle()`**: Safely collects the `StateFlow` only while the Android Activity/Fragment is at least in the `STARTED` lifecycle state, conserving CPU and battery in the background.\n2. **`by` Delegate**: Unwraps the Compose `State<T>` object into a direct reference, triggering recomposition only when `state.userQuery` value changes."
+            input: "val state by viewModel.uiState.collectAsStateWithLifecycle()
+Text(text = state.userQuery)",
+            output: "### Architectural Breakdown
+1. **`collectAsStateWithLifecycle()`**: Safely collects the `StateFlow` only while the Android Activity/Fragment is at least in the `STARTED` lifecycle state, conserving CPU and battery in the background.
+2. **`by` Delegate**: Unwraps the Compose `State<T>` object into a direct reference, triggering recomposition only when `state.userQuery` value changes."
         }
     };
 
@@ -209,7 +230,7 @@
                 if (inputArea && promptLabSamples[activeTool]) {
                     inputArea.value = promptLabSamples[activeTool].input;
                     if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
-                    showToast(`Loaded sample for ${activeTool.toUpperCase()}`, '📝');
+                    showToast(`Loaded sample for ${activeTool.toUpperCase()}`, 'document');
                 }
             });
         }
@@ -221,11 +242,11 @@
                 if (!sample) return;
 
                 executeBtn.disabled = true;
-                outputArea.innerHTML = '<div style="color: var(--brand-orange); font-family: var(--font-mono); font-size: 0.85rem;"><span class="pulse-icon">⚡</span> Processing with local LiteRT / GGUF engine...</div>';
+                outputArea.innerHTML = '<div style="color: var(--brand-orange); font-family: var(--font-mono); font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Processing with local LiteRT / GGUF engine...</div>';
 
                 setTimeout(() => {
                     outputArea.innerHTML = '';
-                    const fullText = sample.output.replace(/\\n/g, '<br>');
+                    const fullText = sample.output.replace(/\n/g, '<br>');
                     let index = 0;
                     
                     const interval = setInterval(() => {
@@ -236,7 +257,7 @@
                             clearInterval(interval);
                             outputArea.innerHTML = fullText;
                             executeBtn.disabled = false;
-                            showToast('Transformation completed in 0.42s!', '⚡');
+                            showToast('Transformation completed in 0.42s!', 'bolt');
                         }
                     }, 25);
                 }, 400);
@@ -249,9 +270,9 @@
                 const text = outputArea.innerText;
                 if (text && !text.includes('Select a tool')) {
                     navigator.clipboard.writeText(text);
-                    showToast('Transformed text copied!', '📋');
+                    showToast('Transformed text copied!', 'copy');
                 } else {
-                    showToast('Run a transformation first!', '⚠️');
+                    showToast('Run a transformation first!', 'warning');
                 }
             });
         }
@@ -274,7 +295,7 @@
         downloadBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 if (isDownloading) {
-                    showToast('Download currently in progress...', '⏳');
+                    showToast('Download currently in progress...', 'clock');
                     return;
                 }
 
@@ -301,9 +322,9 @@
                     if (progress >= 100) {
                         clearInterval(interval);
                         isDownloading = false;
-                        if (simStatus) simStatus.textContent = '✓ Saved to Documents/Oorty/models/';
+                        if (simStatus) simStatus.textContent = 'Saved to Documents/Oorty/models/';
                         if (simSpeed) simSpeed.textContent = 'Done';
-                        showToast(`Successfully saved ${model} to vault!`, '🎉');
+                        showToast(`Successfully saved ${model} to vault!`, 'check');
                     }
                 }, 180);
             });
@@ -319,14 +340,13 @@
             quant: 'Quant: Q4_K_M • ~450 MB VRAM',
             badgeClass: 'badge-safe',
             badgeText: 'Comfortable Fit',
-            badgeIcon: '🟢',
             explanation: 'Perfect for 4GB RAM devices. Operates with near-zero background pressure and achieves the highest decode speeds (35+ tok/s).',
             gaugeVal: '~450 MB / 4,096 MB (11%)',
             gaugePercent: '11%',
             gaugeColor: 'fill-green',
             speed: '~35 tok/s',
             context: '2,048 Tokens',
-            agentic: '⚡ Limited (Basic)',
+            agentic: 'Limited (Basic)',
             risk: 'Zero (Safe)',
             riskClass: 'text-green'
         },
@@ -335,14 +355,13 @@
             quant: 'Quant: Q4_K_M • ~850 MB VRAM',
             badgeClass: 'badge-safe',
             badgeText: 'Comfortable Fit',
-            badgeIcon: '🟢',
             explanation: 'Optimal choice for 6GB devices. Delivers 25–35 tok/s decode speed with fast responses and low battery consumption. Leaves ample RAM for Android OS.',
             gaugeVal: '~850 MB / 6,144 MB (13.8%)',
             gaugePercent: '14%',
             gaugeColor: 'fill-green',
             speed: '~30 tok/s',
             context: '4,096 Tokens',
-            agentic: '⚡ Limited (Fast)',
+            agentic: 'Limited (Fast)',
             risk: 'Zero (Safe)',
             riskClass: 'text-green'
         },
@@ -351,14 +370,13 @@
             quant: 'Quant: Q4_K_M • ~1.6 GB VRAM',
             badgeClass: 'badge-safe',
             badgeText: 'Comfortable Fit',
-            badgeIcon: '🟢',
             explanation: 'High reasoning performance with Google’s Gemma 2 architecture. Supports multi-step tool calls and code generation on 8GB RAM devices.',
             gaugeVal: '~1,600 MB / 8,192 MB (19.5%)',
             gaugePercent: '20%',
             gaugeColor: 'fill-green',
             speed: '~20 tok/s',
             context: '4,096 Tokens',
-            agentic: '✅ Moderate',
+            agentic: 'Moderate',
             risk: 'Zero (Safe)',
             riskClass: 'text-green'
         },
@@ -367,14 +385,13 @@
             quant: 'Quant: Q4_K_M • ~2.4 – 4.8 GB VRAM',
             badgeClass: 'badge-safe',
             badgeText: 'Full Power Mode',
-            badgeIcon: '🚀',
             explanation: 'Full autonomous capability. Supports complex MCP tool chains, deep reasoning, long context recall, and sophisticated coding tasks without slowdown.',
             gaugeVal: '~2,400 MB / 12,288 MB (19.5%)',
             gaugePercent: '22%',
             gaugeColor: 'fill-green',
             speed: '~14–22 tok/s',
             context: '8,192 Tokens',
-            agentic: '🚀 Full Autonomous',
+            agentic: 'Full Autonomous',
             risk: 'Zero (Safe)',
             riskClass: 'text-green'
         }
@@ -412,7 +429,7 @@
                 }
                 if (badgeEl) {
                     badgeEl.className = `ram-safety-badge ${profile.badgeClass}`;
-                    badgeEl.innerHTML = `<span class="badge-icon">${profile.badgeIcon}</span><span>${profile.badgeText}</span>`;
+                    badgeEl.innerHTML = `<span class="badge-dot-svg"></span><span>${profile.badgeText}</span>`;
                 }
                 if (speedEl) speedEl.textContent = profile.speed;
                 if (contextEl) contextEl.textContent = profile.context;
@@ -460,7 +477,7 @@
                 const rawCode = paneRaw?.querySelector('code')?.innerText;
                 if (rawCode) {
                     navigator.clipboard.writeText(rawCode);
-                    showToast('Obsidian Markdown note copied!', '📓');
+                    showToast('Obsidian Markdown note copied!', 'copy');
                 }
             });
         }
@@ -512,7 +529,7 @@
                         badge.className = 'trace-badge-idle';
                         badge.textContent = 'Completed';
                     }
-                    showToast('MCP Agent simulation finished!', '🛠️');
+                    showToast('MCP Agent simulation finished!', 'wrench');
                 }
             }, 350);
         });
@@ -543,7 +560,7 @@
                 const codeEl = targetSel ? $(targetSel) : btn.closest('.code-header')?.nextElementSibling;
                 if (codeEl) {
                     navigator.clipboard.writeText(codeEl.innerText);
-                    showToast('Code snippet copied!', '📋');
+                    showToast('Code snippet copied!', 'copy');
                 }
             });
         });

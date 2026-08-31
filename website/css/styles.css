@@ -917,6 +917,10 @@ p, span, li, a {
 
 .mode-tab-btn {
     flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     padding: 6px 4px;
     font-size: 0.68rem;
     font-weight: 700;
@@ -932,6 +936,9 @@ p, span, li, a {
 .mode-tab-btn.active {
     background: var(--brand-orange);
     color: #fff;
+}
+.mode-tab-btn .mode-icon {
+    flex-shrink: 0;
 }
 
 /* Phone Views Viewport */
@@ -1068,6 +1075,8 @@ p, span, li, a {
     cursor: pointer;
     font-weight: 600;
     color: var(--brand-orange);
+    display: flex;
+    align-items: center;
 }
 .thought-body {
     padding-top: 6px;
@@ -1249,6 +1258,9 @@ p, span, li, a {
     100% { transform: translateX(-50%); }
 }
 .eco-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     background: var(--bg-surface-elevated);
     border: 1px solid var(--border-subtle);
     padding: 7px 16px;
@@ -1256,6 +1268,10 @@ p, span, li, a {
     font-size: 0.82rem;
     font-weight: 600;
     color: var(--text-secondary);
+}
+.eco-pill .eco-svg {
+    color: var(--brand-orange);
+    flex-shrink: 0;
 }
 
 /* ---------- Prompt Lab Interactive Studio ---------- */
@@ -1293,8 +1309,27 @@ p, span, li, a {
     background: var(--brand-orange-light);
     border-color: var(--brand-orange);
 }
-.lab-tab-icon {
-    font-size: 1.4rem;
+.lab-tab-icon-box {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-orange);
+    flex-shrink: 0;
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+.lab-tab:hover .lab-tab-icon-box {
+    transform: scale(1.08);
+    border-color: var(--brand-orange);
+}
+.lab-tab.active .lab-tab-icon-box {
+    background: var(--brand-orange);
+    color: #fff;
+    border-color: var(--brand-orange);
 }
 .lab-tab-text strong {
     display: block;
@@ -1377,15 +1412,19 @@ p, span, li, a {
     justify-content: center;
     color: var(--text-muted);
     text-align: center;
-    gap: 8px;
+    gap: 10px;
 }
-.pulse-icon {
-    font-size: 1.6rem;
+.output-placeholder .pulse-icon {
+    color: var(--brand-orange);
+    opacity: 0.8;
 }
 .lab-telemetry-footer {
     font-size: 0.75rem;
     font-family: var(--font-mono);
     color: var(--color-success);
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 /* ---------- HuggingFace GGUF Hub Section ---------- */
@@ -1427,6 +1466,8 @@ p, span, li, a {
     font-weight: 800;
     padding: 3px 9px;
     border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
 }
 
 .hf-card-top {
@@ -1490,6 +1531,13 @@ p, span, li, a {
     font-size: 0.88rem;
     font-weight: 700;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sim-title svg {
+    color: var(--brand-orange);
+    flex-shrink: 0;
 }
 .sim-status {
     font-size: 0.75rem;
@@ -1597,6 +1645,14 @@ p, span, li, a {
 .badge-safe { background: var(--color-success-bg); color: var(--color-success); }
 .badge-tight { background: var(--color-warning-bg); color: var(--color-warning); }
 .badge-danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.badge-dot-svg {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+    flex-shrink: 0;
+}
 
 .ram-explanation {
     color: var(--text-secondary);
@@ -1656,6 +1712,9 @@ p, span, li, a {
 .metric-value {
     font-size: 0.9rem;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 .text-green { color: var(--color-success) !important; }
 
@@ -1685,7 +1744,7 @@ p, span, li, a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    color: var(--brand-orange);
     margin-bottom: 16px;
     transition: transform var(--transition-spring);
 }
@@ -1733,6 +1792,7 @@ p, span, li, a {
     display: flex;
     align-items: center;
     justify-content: center;
+    color: var(--brand-orange);
     flex-shrink: 0;
 }
 .obsidian-point h4 {
@@ -2196,6 +2256,10 @@ p, span, li, a {
     gap: 10px;
     animation: toastSlideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     pointer-events: auto;
+}
+.toast-svg {
+    color: var(--brand-orange);
+    flex-shrink: 0;
 }
 @keyframes toastSlideIn {
     from { transform: translateX(100%); opacity: 0; }
