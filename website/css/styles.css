@@ -135,10 +135,7 @@ img, svg {
     user-select: none;
 }
 
-/* Prevent inner elements from swallowing click events */
-button > *, a > * {
-    pointer-events: none;
-}
+
 
 a {
     color: inherit;
@@ -184,6 +181,8 @@ button {
 
 /* Container */
 .container {
+    position: relative;
+    z-index: 1;
     width: 100%;
     max-width: 1240px;
     margin: 0 auto;
@@ -430,6 +429,7 @@ p, span, li, a {
     );
     transform: skewX(-25deg);
     animation: shineSweep 4.5s infinite ease-in-out;
+    pointer-events: none;
 }
 @keyframes shineSweep {
     0% { left: -120%; }
@@ -597,10 +597,16 @@ p, span, li, a {
     background: rgba(0, 0, 0, 0.65);
     backdrop-filter: blur(10px);
     z-index: 2000;
-    transition: right var(--transition-base);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: right var(--transition-base), opacity var(--transition-base), visibility var(--transition-base);
 }
 .mobile-drawer.open {
     right: 0;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 .mobile-drawer-content {
@@ -683,6 +689,7 @@ p, span, li, a {
     filter: blur(100px);
     opacity: 0.45;
     pointer-events: none;
+    z-index: 0;
 }
 .hero-glow-1 {
     top: 10%;

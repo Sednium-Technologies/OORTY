@@ -131,30 +131,35 @@
     // =========================================================================
     const promptLabSamples = {
         'summarize': {
+            placeholder: "Paste article, notes, or technical specification to summarize...",
             input: "Kotlin Coroutines provide a declarative way to write asynchronous, non-blocking code. By using suspend functions, dispatchers (Dispatchers.IO, Dispatchers.Default, Dispatchers.Main), and structured concurrency with CoroutineScope, developers can prevent memory leaks and coordinate complex parallel tasks seamlessly without callback hell.",
-            output: "### Summary Overview\n- **Core Mechanism**: Non-blocking asynchronous programming via `suspend` functions.\n- **Thread Management**: Clear thread boundaries through Dispatchers (`IO`, `Default`, `Main`).\n- **Reliability**: Structured concurrency guarantees automatic child cancellation and zero memory leaks.",
+            output: "### Summary Overview\n- **Core Mechanism**: Non-blocking asynchronous programming via suspend functions.\n- **Thread Management**: Clear thread boundaries through Dispatchers (IO, Default, Main).\n- **Reliability**: Structured concurrency guarantees automatic child cancellation and zero memory leaks.",
             telemetry: "Mode: LOCAL_GGUF • Temperature: 0.7 • Max Tokens: 512"
         },
         'improve': {
+            placeholder: "Paste raw text or bullet points to rewrite with precision...",
             input: "i made a new feature in my app that lets users chat with local models and it saves chats in markdown files so people can open it in obsidian and not lose data.",
-            output: "### Refined Copy\n"Engineered a native on-device AI orchestration feature enabling fully offline local inference. All conversational streams are dual-written as open Markdown documents with structured YAML frontmatter—providing seamless, zero-lock-in integration with Obsidian vaults."",
+            output: "### Refined Copy\n\"Engineered a native on-device AI orchestration feature enabling fully offline local inference. All conversational streams are dual-written as open Markdown documents with structured YAML frontmatter—providing seamless, zero-lock-in integration with Obsidian vaults.\"",
             telemetry: "Mode: LOCAL_GGUF • Temperature: 0.3 • Max Tokens: 512"
         },
         'explain': {
+            placeholder: "Paste code snippet, SQL query, or architecture diagram...",
             input: "val state by viewModel.uiState.collectAsStateWithLifecycle()\nText(text = state.userQuery)",
-            output: "### Architectural Breakdown\n1. **`collectAsStateWithLifecycle()`**: Safely collects the `StateFlow` only while the Android Activity/Fragment is at least in the `STARTED` lifecycle state, conserving CPU and battery in the background.\n2. **`by` Delegate**: Unwraps the Compose `State<T>` object into a direct reference, triggering recomposition only when `state.userQuery` value changes.",
+            output: "### Architectural Breakdown\n1. **collectAsStateWithLifecycle()**: Safely collects the StateFlow only while the Android Activity/Fragment is at least in the STARTED lifecycle state, conserving CPU and battery in the background.\n2. **by Delegate**: Unwraps the Compose State<T> object into a direct reference, triggering recomposition only when state.userQuery value changes.",
             telemetry: "Mode: LOCAL_GGUF • Temperature: 0.2 • Max Tokens: 512"
         }
     };
 
     let activePromptTool = 'summarize';
 
-    function setPromptLabTool(tool) {
+    function setPromptLabTool(toolKey) {
+        const tool = (toolKey || '').toLowerCase();
         if (!promptLabSamples[tool]) return;
         activePromptTool = tool;
 
         $$('.lab-tab').forEach(tab => {
-            const isActive = tab.dataset.tool === tool;
+            const currentTool = (tab.dataset.tab || tab.dataset.tool || '').toLowerCase();
+            const isActive = currentTool === tool;
             tab.classList.toggle('active', isActive);
             tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
@@ -164,6 +169,7 @@
         const telemetryFooter = $('.lab-telemetry-footer');
 
         if (inputArea) {
+            inputArea.placeholder = promptLabSamples[tool].placeholder;
             inputArea.value = promptLabSamples[tool].input;
             if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
         }
@@ -184,12 +190,12 @@
 
         setTimeout(() => {
             outputArea.innerHTML = '';
-            const fullText = sample.output.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+            const fullText = sample.output.replace(/\n/g, '<br>');
             let index = 0;
             
             const interval = setInterval(() => {
                 index += 8;
-                outputArea.innerHTML = fullText.slice(0, index) + '<span style="color: var(--brand-orange); animation: blinkDot 0.8s infinite;">▌</span>';
+                outputArea.innerHTML = fullText.slice(0, index) + '<span style="color: var(--brand-orange);">▌</span>';
                 
                 if (index >= fullText.length) {
                     clearInterval(interval);
@@ -315,20 +321,27 @@
         }
     };
 
-    function setRamProfile(ramKey) {
-        const profile = ramProfiles[ramKey];
+    function setRamProfile(rawKey) {
+        // Extract numeric digits: "4GB" -> "4", "12+" -> "12"
+        const ramKey = String(rawKey || '').replace(/[^0-9]/g, '');
+        const profile = ramProfiles[ramKey] || ramProfiles['6'];
         if (!profile) return;
 
+        // Toggle active state across buttons
         $$('.ram-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.ram === ramKey);
+            const btnKey = (btn.dataset.ram || btn.dataset.tab || btn.textContent).replace(/[^0-9]/g, '');
+            const isActive = btnKey === ramKey;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
 
-        const titleEl = $('#calcModelTitle');
-        const quantEl = $('#calcQuantTag');
-        const badgeEl = $('#calcSafetyBadge');
-        const expEl = $('#calcExplanation');
-        const gaugeValEl = $('#calcGaugeVal');
-        const gaugeFillEl = $('#calcGaugeFill');
+        // Update card contents
+        const titleEl = $('#calcModelTitle') || $('.ram-title');
+        const quantEl = $('#calcQuantTag') || $('.ram-quant-tag');
+        const badgeEl = $('#calcSafetyBadge') || $('.ram-safety-badge');
+        const expEl = $('#calcExplanation') || $('.ram-explanation');
+        const gaugeValEl = $('#calcGaugeVal') || $('.gauge-val');
+        const gaugeFillEl = $('#calcGaugeFill') || $('.gauge-bar-fill');
         const speedEl = $('#calcSpeedVal');
         const contextEl = $('#calcContextVal');
         const agenticEl = $('#calcAgenticVal');
@@ -442,10 +455,21 @@
     }
 
     // =========================================================================
-    // 10. Global Document Event Delegation (Never Misses Clicks)
+    // 10. Smooth Scroll Helper
+    // =========================================================================
+    function scrollToTarget(targetSelector) {
+        if (!targetSelector || targetSelector === '#') return;
+        const target = $(targetSelector);
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // =========================================================================
+    // 11. Global Document Event Delegation (Never Misses Clicks)
     // =========================================================================
     function setupEventDelegation() {
-        document.addEventListener('click', (e) => {
+        document.body.addEventListener('click', (e) => {
             // Theme Toggle
             const themeBtn = e.target.closest('#themeToggle');
             if (themeBtn) {
@@ -465,15 +489,15 @@
             const closeDrawerBtn = e.target.closest('#drawerClose') || e.target.closest('.drawer-link');
             if (closeDrawerBtn) {
                 closeDrawer();
-                return;
+                // Allow anchor link navigation to proceed
             }
 
             // RAM Matrix Buttons (4GB, 6GB, 8GB, 12GB+)
             const ramBtn = e.target.closest('.ram-btn');
             if (ramBtn) {
                 e.preventDefault();
-                const ram = ramBtn.dataset.ram;
-                if (ram) setRamProfile(ram);
+                const ram = ramBtn.dataset.ram || ramBtn.dataset.tab || ramBtn.textContent;
+                setRamProfile(ram);
                 return;
             }
 
@@ -481,12 +505,12 @@
             const labTab = e.target.closest('.lab-tab');
             if (labTab) {
                 e.preventDefault();
-                const tool = labTab.dataset.tool;
-                if (tool) setPromptLabTool(tool);
+                const tool = labTab.dataset.tab || labTab.dataset.tool;
+                setPromptLabTool(tool);
                 return;
             }
 
-            // Prompt Lab Load Sample
+            // Prompt Lab Load Sample Button
             const sampleBtn = e.target.closest('#labSampleBtn');
             if (sampleBtn) {
                 e.preventDefault();
@@ -501,7 +525,7 @@
                 return;
             }
 
-            // Prompt Lab Run Transformation
+            // Prompt Lab Run Transformation Button
             const runTransformBtn = e.target.closest('#labExecuteBtn');
             if (runTransformBtn) {
                 e.preventDefault();
@@ -509,7 +533,7 @@
                 return;
             }
 
-            // Prompt Lab Copy Output
+            // Prompt Lab Copy Output Button
             const copyOutputBtn = e.target.closest('#labCopyOutputBtn');
             if (copyOutputBtn) {
                 e.preventDefault();
@@ -530,6 +554,25 @@
                 e.preventDefault();
                 const model = downloadModelBtn.dataset.model || 'model-Q4_K_M.gguf';
                 startModelDownload(model);
+                return;
+            }
+
+            // Explore Interactive Demo CTA Button
+            const exploreBtn = e.target.closest('.btn-explore') || e.target.closest('a[href="#demo"], a[href="#interactive-lab"]');
+            if (exploreBtn) {
+                e.preventDefault();
+                const demoEl = $('#demo') || $('#interactive-lab') || $('.hero-phone-wrap') || $('#prompt-lab');
+                if (demoEl) {
+                    demoEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+
+            // Download APK Buttons
+            const downloadApkBtn = e.target.closest('#heroDownloadBtn') || e.target.closest('a[href$=".apk"]');
+            if (downloadApkBtn) {
+                showToast('Initiating direct APK download (v1.0.0)...', 'download');
+                // Allow default href action so browser begins file download
                 return;
             }
 
@@ -599,9 +642,9 @@
                 return;
             }
 
-            // Smooth Scroll for CTA Buttons & Internal Anchor Links
+            // Generic Internal Anchor Links
             const anchor = e.target.closest('a[href^="#"]');
-            if (anchor) {
+            if (anchor && !anchor.classList.contains('btn-explore')) {
                 const targetId = anchor.getAttribute('href');
                 if (targetId && targetId !== '#') {
                     const targetEl = $(targetId);
@@ -642,30 +685,70 @@
     }
 
     // =========================================================================
+    // Direct Event Listeners (Dual Binding Guarantee)
+    // =========================================================================
+    function bindDirectListeners() {
+        // Direct bindings for RAM matrix buttons
+        $$('.ram-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const ram = btn.dataset.ram || btn.dataset.tab || btn.textContent;
+                setRamProfile(ram);
+            });
+        });
+
+        // Direct bindings for Prompt Lab tabs
+        $$('.lab-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tool = tab.dataset.tab || tab.dataset.tool;
+                setPromptLabTool(tool);
+            });
+        });
+
+        // Direct binding for Run Transformation
+        const execBtn = $('#labExecuteBtn');
+        if (execBtn) {
+            execBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                runPromptTransformation();
+            });
+        }
+
+        // Direct binding for Explore Interactive Demo
+        $$('.btn-explore, a[href="#demo"], a[href="#interactive-lab"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const demoEl = $('#demo') || $('#interactive-lab') || $('.hero-phone-wrap') || $('#prompt-lab');
+                if (demoEl) {
+                    demoEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        });
+    }
+
+    // =========================================================================
     // Initialization Bootstrap
     // =========================================================================
     function initApp() {
         initTheme();
         updateClock();
         setInterval(updateClock, 30000);
+        bindDirectListeners();
         setupEventDelegation();
 
         // Initial setup for Prompt Lab
-        const inputArea = $('#labInputText');
-        const charCounter = $('#labCharCounter');
-        if (inputArea && promptLabSamples[activePromptTool]) {
-            inputArea.value = promptLabSamples[activePromptTool].input;
-            if (charCounter) charCounter.textContent = `${inputArea.value.length} characters`;
-        }
+        setPromptLabTool('summarize');
 
         // Initial RAM Matrix setup (default 6GB)
         setRamProfile('6');
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initApp);
-    } else {
+    // DOM Ready Guarantee
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
         initApp();
+    } else {
+        document.addEventListener('DOMContentLoaded', initApp);
     }
 
 })();
