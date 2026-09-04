@@ -2,21 +2,32 @@ package oorty.sednium.app.api
 
 import android.content.Context
 import android.net.Uri
-import android.os.ParcelFileDescriptor
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import oorty.sednium.app.model.ChatMessage
 import oorty.sednium.app.model.GgufModelInfo
 import oorty.sednium.app.model.Role
+import org.nehuatl.llamacpp.LlamaHelper as NativeLlamaHelper
 import java.io.File
-import java.io.FileInputStream
 
+/**
+ * Native llama.cpp GGUF runner for Oorty.
+ * Directly interfaces with native llama.cpp bindings (librnllama) without mocks or simulated delays.
+ */
 class LlamaHelper(
     private val context: Context,
     private val uri: Uri? = null
@@ -27,27 +38,41 @@ class LlamaHelper(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _loadProgress = MutableStateFlow(0f)
+    val loadProgress: StateFlow<Float> = _loadProgress.asStateFlow()
+
     private val _tokensPerSecond = MutableStateFlow(0f)
     val tokensPerSecond: StateFlow<Float> = _tokensPerSecond.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     private val _modelInfo = MutableStateFlow<GgufModelInfo?>(null)
     val modelInfo: StateFlow<GgufModelInfo?> = _modelInfo.asStateFlow()
 
-    private var nativeHelperInstance: Any? = null
-    private var pfd: ParcelFileDescriptor? = null
+    private var nativeInstance: NativeLlamaHelper? = null
+    private var nativeScope: CoroutineScope? = null
+    private val sharedFlow = MutableSharedFlow<NativeLlamaHelper.LLMEvent>(extraBufferCapacity = 64)
 
     init {
-        if (uri != null) {
+        if (uri != null && uri != Uri.EMPTY) {
             parseUriInfo(uri)
         }
     }
 
-    private fun parseUriInfo(uri: Uri) {
-        val fileName = uri.lastPathSegment?.substringAfterLast("/") ?: "local_model.gguf"
+    private fun parseUriInfo(targetUri: Uri) {
+        val fileName = targetUri.lastPathSegment?.substringAfterLast("/") ?: "local_model.gguf"
         var fileSize = 0L
         try {
-            context.contentResolver.openFileDescriptor(uri, "r")?.use {
-                fileSize = it.statSize
+            if (targetUri.scheme == "content") {
+                context.contentResolver.openFileDescriptor(targetUri, "r")?.use {
+                    fileSize = it.statSize
+                }
+            } else {
+                val file = File(targetUri.path ?: targetUri.toString())
+                if (file.exists()) {
+                    fileSize = file.length()
+                }
             }
         } catch (e: Exception) {
             fileSize = 0L
@@ -69,30 +94,100 @@ class LlamaHelper(
     }
 
     suspend fun loadModel(targetUri: Uri = uri ?: Uri.EMPTY): Result<Boolean> = withContext(Dispatchers.IO) {
-        if (targetUri == Uri.EMPTY) return@withContext Result.failure(IllegalArgumentException("No valid URI provided"))
+        if (targetUri == Uri.EMPTY) {
+            val err = "No valid GGUF model file URI provided"
+            _errorMessage.value = err
+            _isLoading.value = false
+            _isLoaded.value = false
+            return@withContext Result.failure(IllegalArgumentException(err))
+        }
+
         _isLoading.value = true
+        _isLoaded.value = false
+        _errorMessage.value = null
+        _loadProgress.value = 0.05f
+
         try {
             parseUriInfo(targetUri)
+            _loadProgress.value = 0.15f
 
-            // Try initializing native llamacpp if present on device
+            // Release any previously loaded model instance
+            unloadModel()
+
+            val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            nativeScope = scope
+
+            val native = try {
+                NativeLlamaHelper(
+                    contentResolver = context.contentResolver,
+                    scope = scope,
+                    sharedFlow = sharedFlow
+                )
+            } catch (e: Throwable) {
+                _isLoading.value = false
+                _isLoaded.value = false
+                val msg = "Native llama.cpp engine initialization failed: ${e.message}"
+                _errorMessage.value = msg
+                return@withContext Result.failure(Exception(msg, e))
+            }
+            nativeInstance = native
+
+            val resolvedUriString = if (targetUri.scheme == null) {
+                Uri.fromFile(File(targetUri.path ?: targetUri.toString())).toString()
+            } else {
+                targetUri.toString()
+            }
+
+            _loadProgress.value = 0.35f
+
+            val loadDeferred = CompletableDeferred<Boolean>()
+            val loadListenerJob = scope.launch {
+                sharedFlow.collect { event ->
+                    when (event) {
+                        is NativeLlamaHelper.LLMEvent.Loaded -> {
+                            _loadProgress.value = 1.0f
+                            if (!loadDeferred.isCompleted) loadDeferred.complete(true)
+                        }
+                        is NativeLlamaHelper.LLMEvent.Error -> {
+                            if (!loadDeferred.isCompleted) {
+                                loadDeferred.completeExceptionally(Exception(event.message))
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            }
+
+            native.load(
+                path = resolvedUriString,
+                contextLength = 2048,
+                mmprojPath = null,
+                loaded = { durationMs ->
+                    _loadProgress.value = 1.0f
+                    if (!loadDeferred.isCompleted) loadDeferred.complete(true)
+                }
+            )
+
+            // Wait up to 120s for memory mapping and allocation
             try {
-                val llamaClass = Class.forName("io.github.ljcamargo.llamacpp.LlamaHelper")
-                val constructor = llamaClass.getConstructor(Context::class.java)
-                val instance = constructor.newInstance(context)
-                val loadMethod = llamaClass.getMethod("load", Uri::class.java)
-                loadMethod.invoke(instance, uri)
-                nativeHelperInstance = instance
+                withTimeout(120_000) {
+                    loadDeferred.await()
+                }
             } catch (e: Exception) {
-                // Native engine reflection fallback or Robolectric test environment
-                kotlinx.coroutines.delay(1000)
+                loadListenerJob.cancel()
+                throw Exception("GGUF model allocation failed or timed out: ${e.message}", e)
+            } finally {
+                loadListenerJob.cancel()
             }
 
             _isLoaded.value = true
             _isLoading.value = false
             Result.success(true)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             _isLoaded.value = false
             _isLoading.value = false
+            val msg = e.message ?: "Failed to load GGUF model into memory"
+            _errorMessage.value = msg
             Result.failure(e)
         }
     }
@@ -103,108 +198,94 @@ class LlamaHelper(
         history: List<ChatMessage> = emptyList(),
         temperature: Float = 0.7f,
         maxTokens: Int = 2048
-    ): Flow<String> = flow {
-        val startTime = System.currentTimeMillis()
-        var tokenCount = 0
-
-        // If native instance is loaded, try streaming from it
-        if (nativeHelperInstance != null) {
-            try {
-                val instance = nativeHelperInstance!!
-                val generateMethod = instance.javaClass.getMethod(
-                    "generate",
-                    String::class.java,
-                    String::class.java
-                )
-                val fullResponse = generateMethod.invoke(instance, prompt, systemInstruction) as? String
-                if (fullResponse != null) {
-                    val words = fullResponse.split(" ")
-                    for (word in words) {
-                        emit("$word ")
-                        tokenCount++
-                        val elapsedSec = (System.currentTimeMillis() - startTime) / 1000f
-                        if (elapsedSec > 0) _tokensPerSecond.value = tokenCount / elapsedSec
-                        kotlinx.coroutines.delay(30)
-                    }
-                    return@flow
-                }
-            } catch (e: Exception) {
-                // Fallback to pure local processor if native call fails
-            }
+    ): Flow<String> = callbackFlow {
+        val helper = nativeInstance
+        if (helper == null || !_isLoaded.value) {
+            val err = _errorMessage.value ?: "Local GGUF model is not loaded into RAM. Please load a model first."
+            close(IllegalStateException(err))
+            return@callbackFlow
         }
 
-        // Native/Robolectric fallback tokenizer & simulation
+        // Format prompt using standard ChatML format for local instruction-tuned GGUF models
         val fullPrompt = buildString {
-            if (systemInstruction.isNotBlank()) append("System: $systemInstruction\n\n")
+            if (systemInstruction.isNotBlank()) {
+                append("<|im_start|>system\n")
+                append(systemInstruction.trim())
+                append("<|im_end|>\n")
+            }
             history.forEach { msg ->
-                append(if (msg.role == Role.USER) "User: " else "Assistant: ")
-                append(msg.content)
-                append("\n")
+                val roleName = if (msg.role == Role.USER) "user" else "assistant"
+                append("<|im_start|>$roleName\n")
+                append(msg.content.trim())
+                append("<|im_end|>\n")
             }
-            append("User: $prompt\nAssistant: ")
+            append("<|im_start|>user\n")
+            append(prompt.trim())
+            append("<|im_end|>\n")
+            append("<|im_start|>assistant\n")
         }
 
-        // Dynamic on-device contextual synthesis & reasoning engine
-        val cleanPrompt = prompt.trim()
-        val lowerPrompt = cleanPrompt.lowercase()
+        val startTime = System.currentTimeMillis()
+        var emittedTokens = 0
 
-        val generatedText = buildString {
-            // Check if vault context is present
-            if (systemInstruction.contains("[Relevant memory from your past chats")) {
-                val snippetStart = systemInstruction.indexOf("[Relevant memory")
-                val snippet = systemInstruction.substring(snippetStart)
-                    .replace("[Relevant memory from your past chats on this device:]", "")
-                    .replace("[Use the above context if relevant to the query, or proceed naturally.]", "")
-                    .trim()
-                append("Based on your on-device Markdown vault notes:\n\n")
-                append(snippet)
-                append("\n\nIs there anything specific from these past notes you would like me to expand on?")
-            } else if (lowerPrompt.contains("strawberry") && lowerPrompt.contains("r")) {
-                append("The word \"strawberry\" contains exactly 3 'r' letters:\n\n")
-                append("1. st**r**awberry (1st 'r')\n")
-                append("2. strawbe**r**ry (2nd 'r')\n")
-                append("3. strawber**r**y (3rd 'r')\n\n")
-                append("Total count: 3.")
-            } else if (lowerPrompt.contains("hello") || lowerPrompt.contains("hi") || lowerPrompt.contains("hey")) {
-                append("Hello! I am Oorty, running offline directly on your device. All your chats and documents remain 100% private in your local vault. How can I help you today?")
-            } else if (lowerPrompt.contains("who are you") || lowerPrompt.contains("what are you")) {
-                append("I am Oorty, your autonomous on-device AI assistant developed by Sednium. I run locally and connect seamlessly with your Markdown vault and MCP tools.")
-            } else if (lowerPrompt.contains("explain") || lowerPrompt.contains("what is") || lowerPrompt.contains("how does")) {
-                append("Here is a local breakdown for \"$cleanPrompt\":\n\n")
-                append("• **Core Principle**: Operating locally provides instant zero-latency access with complete privacy.\n")
-                append("• **Key Insight**: Processing directly on your device ensures your personal data, vault files, and queries never leave your hardware.\n\n")
-                append("Feel free to ask follow-up questions or request code examples!")
-            } else {
-                append("Received on-device request: \"$cleanPrompt\"\n\n")
-                append("Processing complete in local offline mode. Your session and memory are synchronized with your local vault.")
+        val collectorJob = launch {
+            sharedFlow.collect { event ->
+                when (event) {
+                    is NativeLlamaHelper.LLMEvent.Started -> {
+                        _tokensPerSecond.value = 0f
+                    }
+                    is NativeLlamaHelper.LLMEvent.Ongoing -> {
+                        trySend(event.word)
+                        emittedTokens = event.tokenCount
+                        val elapsedSec = (System.currentTimeMillis() - startTime) / 1000f
+                        if (elapsedSec > 0.05f) {
+                            _tokensPerSecond.value = emittedTokens / elapsedSec
+                        }
+                    }
+                    is NativeLlamaHelper.LLMEvent.Done -> {
+                        val elapsedSec = (System.currentTimeMillis() - startTime) / 1000f
+                        if (elapsedSec > 0f && emittedTokens > 0) {
+                            _tokensPerSecond.value = emittedTokens / elapsedSec
+                        }
+                        close()
+                    }
+                    is NativeLlamaHelper.LLMEvent.Error -> {
+                        close(Exception(event.message))
+                    }
+                    else -> {}
+                }
             }
         }
 
-        val words = generatedText.split(Regex("(?<=\\s)|(?<=\\n)"))
-        for (word in words) {
-            emit(word)
-            tokenCount++
-            val elapsedSec = (System.currentTimeMillis() - startTime) / 1000f
-            if (elapsedSec > 0) {
-                _tokensPerSecond.value = (tokenCount / elapsedSec).coerceAtMost(45f)
-            }
-            kotlinx.coroutines.delay(35)
+        try {
+            helper.predict(
+                prompt = fullPrompt,
+                imagePath = null,
+                partialCompletion = true
+            )
+        } catch (e: Throwable) {
+            close(e)
+        }
+
+        awaitClose {
+            collectorJob.cancel()
+            try {
+                helper.stopPrediction()
+            } catch (ignored: Exception) {}
         }
     }.flowOn(Dispatchers.IO)
 
     fun unloadModel() {
         try {
-            if (nativeHelperInstance != null) {
-                val closeMethod = nativeHelperInstance!!.javaClass.getMethod("close")
-                closeMethod.invoke(nativeHelperInstance)
-            }
-        } catch (e: Exception) {}
-        finally {
-            nativeHelperInstance = null
-            pfd?.close()
-            pfd = null
-            _isLoaded.value = false
-            _tokensPerSecond.value = 0f
-        }
+            nativeInstance?.abort()
+            nativeInstance?.release()
+        } catch (ignored: Exception) {}
+        nativeInstance = null
+        nativeScope?.cancel()
+        nativeScope = null
+        _isLoaded.value = false
+        _isLoading.value = false
+        _loadProgress.value = 0f
+        _tokensPerSecond.value = 0f
     }
 }

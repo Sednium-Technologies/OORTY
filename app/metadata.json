@@ -1,6 +1,25 @@
 {
-  "name": "Sednium LS",
-  "description": "Local AI Chat App powered by llama.cpp",
+  "name": "Oorty by Sednium",
+  "version": "2.0.0",
+  "description": "Warm, editorial-styled multi-model AI orchestrator with zero-mock native on-device neural inference (GGUF & LiteRT), live hands-free voice mode, autonomous MCP agent workflows, and Obsidian-compatible Markdown knowledge bases.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ],
+  "changelog": {
+    "version": "2.0.0",
+    "releaseDate": "2026-09-04",
+    "summary": "Oorty v2.0 introduces zero-mock dual-engine on-device inference (llama.cpp GGUF and Google AI Edge LiteRT), a complete UI/UX overhaul with Lucide icons, hands-free Live Voice Mode, thinking mode separation, and autonomous MCP device tools.",
+    "highlights": [
+      "Zero-Mock On-Device Inference: Direct native bindings to org.nehuatl.llamacpp.LlamaHelper with real-time token streaming and tok/s telemetry.",
+      "Google AI Edge LiteRT Runtime: Native .tflite and .litertlm inference with XNNPACK acceleration and hardware thread pooling.",
+      "Hugging Face Hub Sorter: Format filter chips for GGUF and LiteRT models with curated on-device weights.",
+      "Model Loading Overlay: Real-time RAM safety check, loading progress, and 1.5-second success checkmark delay.",
+      "Thinking Mode: Clean separation of reasoning <thought> chains from primary response content.",
+      "Modernized UI/UX: True pill-shaped composer, cohesive Lucide outline icon family, and borderless assistant messages.",
+      "Live Voice Mode: Dedicated hands-free conversation overlay with dynamic audio waveform feedback.",
+      "Post-Response Actions: Copy, Share, Branch chat, Send to another model, TTS read aloud, and message edit/regenerate.",
+      "Autonomous MCP & Device Tools: Model Context Protocol execution loop with mobile system tools and extensible plugins."
+    ]
+  }
 }

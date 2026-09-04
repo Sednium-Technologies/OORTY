@@ -37,10 +37,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import oorty.sednium.app.model.ChatSession
 import oorty.sednium.app.ui.components.ChatListRow
-import oorty.sednium.app.ui.theme.OrangeAlpha
-import oorty.sednium.app.ui.theme.SedniumColors
-
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import oorty.sednium.app.ui.theme.SedniumRadii
+import oorty.sednium.app.ui.theme.SedniumColors
+import oorty.sednium.app.ui.theme.OrangeAlpha
 
 /**
  * PAGE 2 / 4 — Chat List Screen.
@@ -85,26 +92,47 @@ fun ChatListScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
+    val isDark = oorty.sednium.app.ui.theme.LocalSedniumIsDark.current
+    val accentColor = if (isDark) SedniumColors.DarkOrange else SedniumColors.Orange
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (isDark) SedniumColors.DarkBackground else SedniumColors.Milk)
+            .systemBarsPadding()
+    ) {
         // --- Header ---
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Filled.Chat, contentDescription = null, tint = SedniumColors.Orange)
-                Text("Chats", style = MaterialTheme.typography.titleLarge, color = SedniumColors.Orange)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(oorty.sednium.app.ui.theme.SedniumRadii.squircle))
+                        .background(accentColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = oorty.sednium.app.R.drawable.logo),
+                        contentDescription = "Oorty Logo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                Text("Oorty", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = accentColor)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = {
                     isSelectionMode = !isSelectionMode
                     selectedIds = emptySet()
                 }) {
-                    Text(if (isSelectionMode) "Cancel" else "Select", color = SedniumColors.Orange)
+                    Text(if (isSelectionMode) "Cancel" else "Select", color = accentColor)
                 }
                 IconButton(onClick = onClose) {
-                    Icon(Icons.Filled.Close, contentDescription = "Close", tint = SedniumColors.Orange)
+                    Icon(oorty.sednium.app.ui.theme.OortyIcons.Close, contentDescription = "Close", tint = accentColor)
                 }
             }
         }
@@ -113,59 +141,58 @@ fun ChatListScreen(
         Button(
             onClick = onNewChat,
             enabled = !isSelectionMode,
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(oorty.sednium.app.ui.theme.SedniumRadii.pill),
             colors = ButtonDefaults.buttonColors(
-                containerColor = SedniumColors.Orange,
+                containerColor = accentColor,
                 contentColor = SedniumColors.Milk,
                 disabledContainerColor = OrangeAlpha.a50,
                 disabledContentColor = SedniumColors.Milk.copy(alpha = 0.5f)
             ),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp)
         ) {
-            Icon(Icons.Filled.Add, contentDescription = null)
-            Text(" New Chat", style = MaterialTheme.typography.labelLarge)
+            Icon(oorty.sednium.app.ui.theme.OortyIcons.Plus, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(" New Chat", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
         }
 
-        // --- Prompt Lab entry point: a separate, single-turn workspace
-        // distinct from the chat thread (Summarize / Rewrite / Code Gen). ---
+        // --- Prompt Lab entry point ---
         androidx.compose.material3.OutlinedButton(
             onClick = onOpenPromptLab,
             enabled = !isSelectionMode,
-            shape = RoundedCornerShape(14.dp),
-            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = SedniumColors.Orange),
-            border = androidx.compose.foundation.BorderStroke(1.dp, OrangeAlpha.a30),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
+            shape = RoundedCornerShape(oorty.sednium.app.ui.theme.SedniumRadii.pill),
+            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) SedniumColors.Charcoal700 else OrangeAlpha.a30),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
-            Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text(" Prompt Lab", style = MaterialTheme.typography.labelLarge)
+            Icon(oorty.sednium.app.ui.theme.OortyIcons.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+            Text(" Prompt Lab", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
         }
 
-        // --- Search Bar ---
+        // --- Search Bar (Pill Shape) ---
         androidx.compose.material3.OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search chats...", style = MaterialTheme.typography.bodyMedium, color = SedniumColors.Gray500) },
+            placeholder = { Text("Search chats...", style = MaterialTheme.typography.bodyMedium, color = if (isDark) SedniumColors.Gray500 else OrangeAlpha.a40) },
             leadingIcon = { 
-                Icon(Icons.Filled.Search, contentDescription = "Search", tint = SedniumColors.Gray500) 
+                Icon(oorty.sednium.app.ui.theme.OortyIcons.Search, contentDescription = "Search", tint = if (isDark) SedniumColors.Gray500 else OrangeAlpha.a50, modifier = Modifier.size(18.dp)) 
             },
             singleLine = true,
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { searchQuery = "" }) {
-                        Icon(Icons.Filled.Close, contentDescription = "Clear search", tint = SedniumColors.Gray500)
+                        Icon(oorty.sednium.app.ui.theme.OortyIcons.Close, contentDescription = "Clear search", tint = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a60, modifier = Modifier.size(16.dp))
                     }
                 }
             },
             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = SedniumColors.Orange,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-                unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent
+                focusedBorderColor = accentColor,
+                unfocusedBorderColor = if (isDark) SedniumColors.Charcoal700 else OrangeAlpha.a30,
+                focusedTextColor = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange,
+                unfocusedTextColor = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange,
+                focusedContainerColor = if (isDark) SedniumColors.Charcoal800 else Color.Transparent,
+                unfocusedContainerColor = if (isDark) SedniumColors.Charcoal800 else Color.Transparent
             ),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
+            shape = RoundedCornerShape(oorty.sednium.app.ui.theme.SedniumRadii.pill),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp)
         )
 
         // --- List ---

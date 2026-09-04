@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -57,6 +58,8 @@ fun SedniumApp(
     currentChatId: String,
     settings: AppSettings,
     mcpServerManager: oorty.sednium.app.mcp.McpServerManager,
+    pluginManager: oorty.sednium.app.plugins.PluginManager? = null,
+    speechService: oorty.sednium.app.plugins.speech.SpeechService? = null,
     onUpdateSettings: (AppSettings) -> Unit,
     onUpdateSessionConfig: (ChatSession) -> Unit,
     onSelectChat: (String) -> Unit,
@@ -66,22 +69,96 @@ fun SedniumApp(
     onRenameChat: (String, String) -> Unit,
     onTogglePin: (String) -> Unit,
     onClearCurrentChat: () -> Unit,
-    onSend: (String, List<Attachment>) -> Unit,
+    onSend: (String, List<Attachment>, Boolean) -> Unit,
     onRetry: () -> Unit,
     isLoading: Boolean,
-    onOpenPromptLab: () -> Unit = {}
+    onOpenPromptLab: () -> Unit = {},
+    onBranchChat: ((ChatMessage) -> Unit)? = null,
+    onSendToModel: ((ChatMessage, ModelProvider, String) -> Unit)? = null,
+    onEditUserMessage: ((ChatMessage) -> Unit)? = null
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
     var isSettingsOpen by remember { mutableStateOf(false) }
     var showSessionConfig by remember { mutableStateOf(false) }
+    var showVoiceMode by remember { mutableStateOf(false) }
     var isPresetMenuOpen by remember { mutableStateOf(false) }
     var input by remember { mutableStateOf("") }
     var attachments by remember { mutableStateOf(listOf<Attachment>()) }
     var selectedImage by remember { mutableStateOf<String?>(null) }
     var exportText by remember { mutableStateOf("") }
     var localServerStatus by remember { mutableStateOf(LocalServerStatus.UNKNOWN) }
+    val currentChat = chats.find { it.id == currentChatId } ?: chats.firstOrNull()
+    val isConfigValid = settings.model.isNotBlank()
+
+    // Speech & Voice State Collection
+    val isListening by (speechService?.isListening?.collectAsState() ?: remember { mutableStateOf(false) })
+    val isSpeaking by (speechService?.isSpeaking?.collectAsState() ?: remember { mutableStateOf(false) })
+    val spokenMessageId by (speechService?.spokenMessageId?.collectAsState() ?: remember { mutableStateOf(null) })
+    val liveSpokenText by (speechService?.liveSpokenText?.collectAsState() ?: remember { mutableStateOf("") })
+    val soundLevel by (speechService?.soundLevel?.collectAsState() ?: remember { mutableStateOf(0f) })
+
+    var lastSpokenMsgId by remember { mutableStateOf<String?>(null) }
+
+    // If in Voice Mode and speech recognized, trigger send
+    androidx.compose.runtime.LaunchedEffect(showVoiceMode) {
+        if (showVoiceMode && speechService != null) {
+            speechService.isContinuousMode = true
+            speechService.onSpeechRecognized = { transcript ->
+                if (transcript.isNotBlank()) {
+                    onSend(transcript, emptyList(), true)
+                }
+            }
+            speechService.onSpeechComplete = {
+                // When TTS finished reading the model's response in voice mode, automatically resume listening
+                if (showVoiceMode) {
+                    speechService.startListening()
+                }
+            }
+            speechService.onInterruption = {
+                if (showVoiceMode) {
+                    speechService.stopSpeaking()
+                    speechService.startListening()
+                }
+            }
+            speechService.startListening()
+        } else {
+            speechService?.isContinuousMode = false
+            speechService?.stopListening()
+            speechService?.stopSpeaking()
+        }
+    }
+
+    // Watchdog to auto-resume listening when in Hands-Free Voice Mode if speech and generation are done
+    androidx.compose.runtime.LaunchedEffect(showVoiceMode, isLoading, isSpeaking, isListening) {
+        if (showVoiceMode && speechService != null && !isLoading && !isSpeaking && !isListening) {
+            kotlinx.coroutines.delay(350)
+            if (showVoiceMode && !isLoading && !speechService.isSpeaking.value && !speechService.isListening.value) {
+                speechService.isContinuousMode = true
+                speechService.startListening()
+            }
+        }
+    }
+
+    // Auto-speak model response when in Hands-Free Voice Mode (fallback for non-streaming turns)
+    androidx.compose.runtime.LaunchedEffect(isLoading, showVoiceMode, currentChat?.messages?.size) {
+        if (showVoiceMode && speechService != null && !isLoading) {
+            val lastMsg = currentChat?.messages?.lastOrNull()
+            if (lastMsg != null && lastMsg.role == oorty.sednium.app.model.Role.MODEL && lastMsg.id != lastSpokenMsgId) {
+                lastSpokenMsgId = lastMsg.id
+                if (lastMsg.content.isNotBlank() && !isSpeaking) {
+                    speechService.speakText(
+                        text = lastMsg.content,
+                        messageId = lastMsg.id,
+                        rate = settings.ttsSpeechRate,
+                        pitch = settings.ttsPitch,
+                        persona = settings.voicePersona
+                    )
+                }
+            }
+        }
+    }
 
     androidx.compose.runtime.LaunchedEffect(settings.provider, settings.localBaseUrl, isLoading) {
         if (settings.provider != ModelProvider.LOCAL) {
@@ -114,9 +191,6 @@ fun SedniumApp(
             delay(5000)
         }
     }
-
-    val currentChat = chats.find { it.id == currentChatId } ?: chats.firstOrNull()
-    val isConfigValid = settings.model.isNotBlank()
 
     val context = androidx.compose.ui.platform.LocalContext.current
     val contentResolver = context.contentResolver
@@ -160,8 +234,9 @@ fun SedniumApp(
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
+            val isDark = oorty.sednium.app.ui.theme.LocalSedniumIsDark.current
             ModalDrawerSheet(
-                drawerContainerColor = oorty.sednium.app.ui.theme.SedniumColors.Milk
+                drawerContainerColor = if (isDark) oorty.sednium.app.ui.theme.SedniumColors.DarkBackground else oorty.sednium.app.ui.theme.SedniumColors.Milk
             ) {
                 ChatListScreen(
                     chats = chats,
@@ -180,7 +255,7 @@ fun SedniumApp(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             ChatScreen(
-                chatTitle = currentChat?.title ?: "Sednium AI",
+                chatTitle = currentChat?.title ?: "Oorty AI",
                 settings = settings,
                 localServerStatus = localServerStatus,
                 messages = currentChat?.messages ?: emptyList(),
@@ -189,10 +264,21 @@ fun SedniumApp(
                 input = input,
                 attachments = attachments,
                 isPresetMenuOpen = isPresetMenuOpen,
+                currentlySpokenMessageId = spokenMessageId,
+                onSpeakMessage = { msg ->
+                    if (spokenMessageId == msg.id) {
+                        speechService?.stopSpeaking()
+                    } else {
+                        speechService?.speakText(msg.content, msg.id, settings.ttsSpeechRate, settings.ttsPitch, settings.voicePersona)
+                    }
+                },
+                onOpenVoiceMode = {
+                    showVoiceMode = true
+                },
                 onInputChange = { input = it },
                 onSend = {
                     if (input.isNotBlank() || attachments.isNotEmpty()) {
-                        onSend(input, attachments)
+                        onSend(input, attachments, false)
                         input = ""
                         attachments = emptyList()
                     }
@@ -213,16 +299,23 @@ fun SedniumApp(
                     )
                     isPresetMenuOpen = false
                 },
+                onBranchChat = onBranchChat,
+                onSendToModel = onSendToModel,
+                onEditUserMessage = { userMsg ->
+                    input = userMsg.content
+                    attachments = userMsg.attachments
+                    onEditUserMessage?.invoke(userMsg)
+                },
                 onMenuClick = { scope.launch { drawerState.open() } },
                 onExportClick = {
                     val chat = currentChat
                     if (chat != null) {
                         exportText = chat.messages.joinToString("\n\n") { msg ->
-                            val roleName = if (msg.role == oorty.sednium.app.model.Role.USER) "You" else "Sednium AI"
+                            val roleName = if (msg.role == oorty.sednium.app.model.Role.USER) "You" else "AI"
                             "[$roleName]\n${msg.content}"
                         }
                         val safeTitle = chat.title.replace(Regex("[^a-zA-Z0-9_-]"), "_").take(20).ifBlank { "chat" }
-                        val filename = "sednium_export_${safeTitle}.txt"
+                        val filename = "oorty_export_${safeTitle}.txt"
                         exportLauncher.launch(filename)
                     }
                 },
@@ -267,6 +360,8 @@ fun SedniumApp(
                 settings = settings,
                 localServerStatus = localServerStatus,
                 mcpServerManager = mcpServerManager,
+                pluginManager = pluginManager,
+                speechService = speechService,
                 onOpenMcpServers = { showMcpServers = true },
                 onUpdateSettings = onUpdateSettings,
                 onClose = { 
@@ -278,6 +373,56 @@ fun SedniumApp(
                 }
             )
         }
+    }
+
+    // --- Onboarding First-Load Plugin Screen ---
+    if (!settings.hasCompletedPluginOnboarding && pluginManager != null) {
+        oorty.sednium.app.ui.screens.PluginOnboardingScreen(
+            pluginManager = pluginManager,
+            onCompleteOnboarding = { selectedIds ->
+                onUpdateSettings(
+                    settings.copy(
+                        hasCompletedPluginOnboarding = true,
+                        installedPluginIds = settings.installedPluginIds + selectedIds,
+                        activePluginIds = settings.activePluginIds + selectedIds
+                    )
+                )
+            },
+            onSkip = {
+                onUpdateSettings(settings.copy(hasCompletedPluginOnboarding = true))
+            }
+        )
+    }
+
+    // --- Continuous Hands-Free Live Mode Voice Overlay ---
+    if (showVoiceMode && speechService != null) {
+        val lastModelMessage = currentChat?.messages?.lastOrNull { it.role == oorty.sednium.app.model.Role.MODEL }?.content ?: ""
+        oorty.sednium.app.ui.components.LiveModeOverlay(
+            isListening = isListening,
+            isSpeaking = isSpeaking,
+            isLoading = isLoading,
+            soundLevel = soundLevel,
+            userSaidText = liveSpokenText.ifBlank { input },
+            modelResponseText = lastModelMessage,
+            onMicClick = {
+                if (isSpeaking) {
+                    speechService.stopSpeaking()
+                    speechService.startListening()
+                } else if (isListening) {
+                    speechService.isContinuousMode = false
+                    speechService.stopListening()
+                } else {
+                    speechService.isContinuousMode = true
+                    speechService.startListening()
+                }
+            },
+            onClose = {
+                showVoiceMode = false
+                speechService.isContinuousMode = false
+                speechService.stopListening()
+                speechService.stopSpeaking()
+            }
+        )
     }
 
     if (showMcpServers) {

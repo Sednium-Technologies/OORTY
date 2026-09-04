@@ -49,13 +49,17 @@ class LocalGgufToolChatClient(
         val lastUserTurn = history.filterIsInstance<LlmChatTurn.User>().lastOrNull()?.text ?: ""
 
         val responseBuilder = StringBuilder()
-        llamaHelper.generateStream(
-            prompt = lastUserTurn,
-            systemInstruction = effectiveSystemPrompt,
-            temperature = temperature,
-            maxTokens = maxTokens
-        ).collect { chunk ->
-            responseBuilder.append(chunk)
+        try {
+            llamaHelper.generateStream(
+                prompt = lastUserTurn,
+                systemInstruction = effectiveSystemPrompt,
+                temperature = temperature,
+                maxTokens = maxTokens
+            ).collect { chunk ->
+                responseBuilder.append(chunk)
+            }
+        } catch (e: Throwable) {
+            responseBuilder.append("[Local Engine Error: ${e.message ?: "Failed to generate response"}]")
         }
 
         val responseText = responseBuilder.toString().trim()

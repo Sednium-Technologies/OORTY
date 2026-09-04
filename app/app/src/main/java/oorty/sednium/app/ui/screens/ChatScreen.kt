@@ -58,6 +58,7 @@ import oorty.sednium.app.model.ChatMode
 import oorty.sednium.app.model.PROVIDER_CONFIG
 import oorty.sednium.app.model.Role
 import oorty.sednium.app.model.SavedModelPreset
+import oorty.sednium.app.model.ModelProvider
 import oorty.sednium.app.model.ToolCallState
 import oorty.sednium.app.ui.components.ChatBubble
 import oorty.sednium.app.ui.components.MessageComposer
@@ -125,6 +126,9 @@ fun ChatScreen(
     input: String,
     attachments: List<Attachment>,
     isPresetMenuOpen: Boolean,
+    currentlySpokenMessageId: String? = null,
+    onSpeakMessage: ((ChatMessage) -> Unit)? = null,
+    onOpenVoiceMode: () -> Unit = {},
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onRetry: () -> Unit,
@@ -137,7 +141,10 @@ fun ChatScreen(
     onClearClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onSessionConfigClick: () -> Unit = {},
-    onImageClick: (String) -> Unit
+    onImageClick: (String) -> Unit,
+    onEditUserMessage: ((ChatMessage) -> Unit)? = null,
+    onBranchChat: ((ChatMessage) -> Unit)? = null,
+    onSendToModel: ((ChatMessage, ModelProvider, String) -> Unit)? = null
 ) {
     val providerName = PROVIDER_CONFIG[settings.provider]?.displayName ?: "Unknown"
     val listState = rememberLazyListState()
@@ -249,18 +256,52 @@ fun ChatScreen(
         }
     }
 
-    var isFocusMode by remember { mutableStateOf(false) }
-
+    val isLocalOnDevice = settings.provider == ModelProvider.LOCAL_GGUF || settings.provider == ModelProvider.LOCAL_LITERT
     val activeLlama = oorty.sednium.app.api.activeLlamaHelper
-    val isGgufLoading by (activeLlama?.isLoading?.collectAsState() ?: remember { mutableStateOf(false) })
-    val isGgufLoaded by (activeLlama?.isLoaded?.collectAsState() ?: remember { mutableStateOf(false) })
+    val activeLiteRt = oorty.sednium.app.api.activeLiteRtHelper
 
-    if (isGgufLoading) {
+    val isModelLoading by (if (settings.provider == ModelProvider.LOCAL_LITERT) activeLiteRt?.isLoading else activeLlama?.isLoading)?.collectAsState() ?: remember { mutableStateOf(false) }
+    val isModelLoaded by (if (settings.provider == ModelProvider.LOCAL_LITERT) activeLiteRt?.isLoaded else activeLlama?.isLoaded)?.collectAsState() ?: remember { mutableStateOf(false) }
+    val modelError by (if (settings.provider == ModelProvider.LOCAL_LITERT) activeLiteRt?.errorMessage else activeLlama?.errorMessage)?.collectAsState() ?: remember { mutableStateOf<String?>(null) }
+    val modelProgress by (if (settings.provider == ModelProvider.LOCAL_LITERT) activeLiteRt?.loadProgress else activeLlama?.loadProgress)?.collectAsState() ?: remember { mutableStateOf(0f) }
+
+    var showChatLoadingOverlay by remember { mutableStateOf(false) }
+    var chatLoadingSuccess by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isModelLoading, isModelLoaded, modelError) {
+        if (isModelLoading) {
+            showChatLoadingOverlay = true
+            chatLoadingSuccess = false
+        } else if (isModelLoaded && showChatLoadingOverlay) {
+            chatLoadingSuccess = true
+        } else if (modelError != null) {
+            showChatLoadingOverlay = true
+            chatLoadingSuccess = false
+        }
+    }
+
+    if (showChatLoadingOverlay) {
         oorty.sednium.app.ui.components.ModelLoadingOverlay(
-            modelName = settings.model.ifBlank { "Local GGUF" },
-            isSuccess = isGgufLoaded,
-            onSuccessComplete = {},
-            onDismiss = {}
+            modelName = settings.model.ifBlank { if (settings.provider == ModelProvider.LOCAL_LITERT) "Local LiteRT" else "Local GGUF" },
+            progress = modelProgress,
+            isSuccess = chatLoadingSuccess,
+            errorMessage = modelError,
+            onSuccessComplete = {
+                showChatLoadingOverlay = false
+                chatLoadingSuccess = false
+            },
+            onRetry = {
+                coroutineScope.launch {
+                    if (settings.provider == ModelProvider.LOCAL_GGUF) {
+                        activeLlama?.loadModel(oorty.sednium.app.api.activeGgufUri)
+                    } else if (settings.provider == ModelProvider.LOCAL_LITERT) {
+                        activeLiteRt?.loadModel(oorty.sednium.app.api.activeLiteRtUri)
+                    }
+                }
+            },
+            onDismiss = {
+                showChatLoadingOverlay = false
+            }
         )
     }
 
@@ -274,15 +315,14 @@ fun ChatScreen(
                     localServerStatus = if (settings.provider == oorty.sednium.app.model.ModelProvider.LOCAL) localServerStatus else null,
                     showClear = messages.isNotEmpty(),
                     showExport = messages.isNotEmpty(),
-                    isFocusMode = isFocusMode,
                     onMenuClick = onMenuClick,
                     onExportClick = onExportClick,
                     onClearClick = onClearClick,
                     onSettingsClick = onSettingsClick,
-                    onSessionConfigClick = onSessionConfigClick,
-                    onFocusModeToggle = { isFocusMode = !isFocusMode }
+                    onSessionConfigClick = onSessionConfigClick
                 )
-                if (settings.provider == oorty.sednium.app.model.ModelProvider.LOCAL_GGUF) {
+                if (isLocalOnDevice) {
+                    val modeLabel = if (settings.provider == ModelProvider.LOCAL_LITERT) "Local LiteRT Mode" else "Local GGUF Mode"
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -292,10 +332,14 @@ fun ChatScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Box(modifier = Modifier.size(6.dp).clip(androidx.compose.foundation.shape.CircleShape).background(SedniumColors.Green500))
-                            Text("Local GGUF Mode", style = MaterialTheme.typography.labelSmall, color = SedniumColors.Green500, fontWeight = FontWeight.Bold)
+                            Box(modifier = Modifier.size(6.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (isModelLoaded) SedniumColors.Green500 else SedniumColors.Orange))
+                            Text(modeLabel, style = MaterialTheme.typography.labelSmall, color = if (isModelLoaded) SedniumColors.Green500 else SedniumColors.Orange, fontWeight = FontWeight.Bold)
                         }
-                        Text("⚡ Limited agentic (<3B)", style = MaterialTheme.typography.labelSmall, color = OrangeAlpha.a70)
+                        Text(
+                            text = if (isModelLoaded) "Model active in memory" else if (isModelLoading) "Allocating RAM..." else "Model idle",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isModelLoaded) SedniumColors.Green500 else SedniumColors.Gray500
+                        )
                     }
                 }
             }
@@ -304,10 +348,9 @@ fun ChatScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f))
                     .navigationBarsPadding()
                     .imePadding()
-                    .padding(12.dp)
+                    .padding(bottom = 12.dp)
             ) {
                 val hasImageAttachment = attachments.any { it.type == oorty.sednium.app.model.AttachmentType.IMAGE }
 
@@ -371,26 +414,34 @@ fun ChatScreen(
                     }
                 }
 
-                MessageComposer(
-                    input = input,
-                    onInputChange = onInputChange,
-                    attachments = attachments,
-                    onRemoveAttachment = onRemoveAttachment,
-                    isLoading = isLoading,
-                    isPresetMenuOpen = isPresetMenuOpen,
-                    onTogglePresetMenu = onTogglePresetMenu,
-                    presets = settings.savedPresets,
-                    activePresetId = settings.activePresetId,
-                    onSelectPreset = onSelectPreset,
-                    onAttachClick = onAttachClick,
-                    isListening = voiceController.isListening,
-                    onVoiceClick = { voiceController.toggle() },
-                    onSend = onSend
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    MessageComposer(
+                        input = input,
+                        onInputChange = onInputChange,
+                        attachments = attachments,
+                        onRemoveAttachment = onRemoveAttachment,
+                        isLoading = isLoading,
+                        isPresetMenuOpen = isPresetMenuOpen,
+                        onTogglePresetMenu = onTogglePresetMenu,
+                        presets = settings.savedPresets,
+                        activePresetId = settings.activePresetId,
+                        onSelectPreset = onSelectPreset,
+                        onAttachClick = onAttachClick,
+                        isListening = voiceController.isListening,
+                        onVoiceClick = { voiceController.toggle() },
+                        onLiveModeClick = onOpenVoiceMode,
+                        onSend = onSend
+                    )
+                }
                 Box(modifier = Modifier.fillMaxWidth().padding(top = 8.dp, start = 8.dp, end = 8.dp), contentAlignment = Alignment.Center) {
                     Text(
                         text = if (isLoading) "Generating response…"
-                        else "Sednium AI may occasionally produce inaccurate, misleading, or\nbeautifully imaginative outputs. Please cross-reference critical data\nindependently.",
+                        else "AI may occasionally produce inaccurate, misleading, or\nimaginative outputs. Please cross-reference critical data\nindependently.",
                         style = MaterialTheme.typography.labelSmall,
                         color = OrangeAlpha.a40,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -428,14 +479,19 @@ fun ChatScreen(
                             isDark = isDark,
                             isGenerating = isLoading && isLast,
                             showPerformanceStats = settings.showPerformanceStats,
+                            isSpeaking = currentlySpokenMessageId == msg.id,
+                            onSpeak = if (settings.enableSpeechTts && onSpeakMessage != null) { { onSpeakMessage(msg) } } else null,
                             onImageClick = onImageClick,
-                            onRetry = if (isLast && msg.role == Role.MODEL && !isLoading) onRetry else null
+                            onRetry = if (isLast && msg.role == Role.MODEL && !isLoading) onRetry else null,
+                            onEditUserMessage = onEditUserMessage,
+                            onBranchChat = onBranchChat,
+                            onSendToModel = onSendToModel
                         )
                     }
                 }
 
                 AnimatedVisibility(
-                    visible = activeToolCalls.isNotEmpty() && !isFocusMode,
+                    visible = activeToolCalls.isNotEmpty(),
                     enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                     exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
                     modifier = Modifier.align(Alignment.TopCenter)

@@ -1,14 +1,19 @@
 package oorty.sednium.app.vault
 
 import kotlin.math.sqrt
+import java.io.File
 
 object EmbeddingEngine {
     private const val VECTOR_DIM = 384
+    var isNeuralEngineActive: Boolean = false
+    var neuralModelFile: File? = null
 
     fun embed(text: String): FloatArray {
         val vector = FloatArray(VECTOR_DIM)
         if (text.isBlank()) return vector
 
+        // If neural model file is available and loaded, we could use LiteRT interpreter.
+        // Fallback / standard path: fast 384-dim dense positional n-gram representation:
         val tokens = text.lowercase()
             .replace(Regex("[^a-z0-9\\s]"), " ")
             .split(Regex("\\s+"))
@@ -60,3 +65,4 @@ object EmbeddingEngine {
         return dot.coerceIn(-1.0f, 1.0f)
     }
 }
+

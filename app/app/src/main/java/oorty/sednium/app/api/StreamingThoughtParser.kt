@@ -2,15 +2,19 @@ package oorty.sednium.app.api
 
 /**
  * Real-time stream demuxer for LLM responses.
- * Detects and extracts `<think>...</think>` blocks from text streams (e.g. Qwen, DeepSeek),
- * routing internal reasoning to [onOutput] as (deltaText="", deltaThought=...),
+ * Detects and extracts `<think>...</think>`, `<thought>...</thought>`, and `<reasoning>...</reasoning>` blocks
+ * from text streams, routing internal reasoning to [onOutput] as (deltaText="", deltaThought=...),
  * and normal text as (deltaText=..., deltaThought=null).
  */
 class StreamingThoughtParser(
     private val onOutput: (deltaText: String, deltaThought: String?) -> Unit
 ) {
     private var inThinkTag = false
+    private var activeCloseTag = "</think>"
     private val buffer = StringBuilder()
+
+    private val openTags = listOf("<think>", "<thought>", "<reasoning>")
+    private val closeTags = listOf("</think>", "</thought>", "</reasoning>")
 
     fun processChunk(rawText: String, rawThought: String?) {
         if (!rawThought.isNullOrEmpty()) {
@@ -24,21 +28,43 @@ class StreamingThoughtParser(
 
         while (str.isNotEmpty()) {
             if (!inThinkTag) {
-                val thinkStartIdx = str.indexOf("<think>")
-                if (thinkStartIdx != -1) {
-                    val before = str.substring(0, thinkStartIdx)
+                // Find earliest opening tag
+                var earliestIdx = -1
+                var matchingOpenTag = ""
+                var matchingCloseTag = ""
+
+                for (tag in openTags) {
+                    val idx = str.indexOf(tag)
+                    if (idx != -1 && (earliestIdx == -1 || idx < earliestIdx)) {
+                        earliestIdx = idx
+                        matchingOpenTag = tag
+                        matchingCloseTag = when (tag) {
+                            "<thought>" -> "</thought>"
+                            "<reasoning>" -> "</reasoning>"
+                            else -> "</think>"
+                        }
+                    }
+                }
+
+                if (earliestIdx != -1) {
+                    val before = str.substring(0, earliestIdx)
                     if (before.isNotEmpty()) {
                         onOutput(before, null)
                     }
                     inThinkTag = true
-                    str = str.substring(thinkStartIdx + "<think>".length)
+                    activeCloseTag = matchingCloseTag
+                    str = str.substring(earliestIdx + matchingOpenTag.length)
                 } else {
-                    val partialTag = listOf("<", "<t", "<th", "<thi", "<thin", "<think")
-                        .findLast { str.endsWith(it) }
-                    if (partialTag != null) {
-                        val safeText = str.substring(0, str.length - partialTag.length)
+                    // Check if string ends with a potential partial open tag
+                    val partialCandidates = openTags.flatMap { tag ->
+                        (1 until tag.length).map { tag.substring(0, it) }
+                    }.distinct().sortedByDescending { it.length }
+
+                    val foundPartial = partialCandidates.firstOrNull { str.endsWith(it) }
+                    if (foundPartial != null) {
+                        val safeText = str.substring(0, str.length - foundPartial.length)
                         if (safeText.isNotEmpty()) onOutput(safeText, null)
-                        buffer.append(partialTag)
+                        buffer.append(foundPartial)
                         break
                     } else {
                         onOutput(str, null)
@@ -46,21 +72,24 @@ class StreamingThoughtParser(
                     }
                 }
             } else {
-                val thinkEndIdx = str.indexOf("</think>")
-                if (thinkEndIdx != -1) {
-                    val thoughtPart = str.substring(0, thinkEndIdx)
+                val closeIdx = str.indexOf(activeCloseTag)
+                if (closeIdx != -1) {
+                    val thoughtPart = str.substring(0, closeIdx)
                     if (thoughtPart.isNotEmpty()) {
                         onOutput("", thoughtPart)
                     }
                     inThinkTag = false
-                    str = str.substring(thinkEndIdx + "</think>".length)
+                    str = str.substring(closeIdx + activeCloseTag.length)
                 } else {
-                    val partialTag = listOf("<", "</", "</t", "</th", "</thi", "</thin", "</think")
-                        .findLast { str.endsWith(it) }
-                    if (partialTag != null) {
-                        val safeThought = str.substring(0, str.length - partialTag.length)
+                    val partialCloseCandidates = (1 until activeCloseTag.length)
+                        .map { activeCloseTag.substring(0, it) }
+                        .sortedByDescending { it.length }
+
+                    val foundPartial = partialCloseCandidates.firstOrNull { str.endsWith(it) }
+                    if (foundPartial != null) {
+                        val safeThought = str.substring(0, str.length - foundPartial.length)
                         if (safeThought.isNotEmpty()) onOutput("", safeThought)
-                        buffer.append(partialTag)
+                        buffer.append(foundPartial)
                         break
                     } else {
                         onOutput("", str)

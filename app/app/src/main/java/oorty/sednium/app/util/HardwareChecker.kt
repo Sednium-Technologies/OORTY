@@ -60,7 +60,8 @@ object HardwareChecker {
             val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
             val memoryInfo = ActivityManager.MemoryInfo()
             activityManager?.getMemoryInfo(memoryInfo)
-            (memoryInfo.availMem / (1024 * 1024)).toInt()
+            val mb = (memoryInfo.availMem / (1024 * 1024)).toInt()
+            if (mb > 0) mb else (Runtime.getRuntime().freeMemory() / (1024 * 1024)).toInt().coerceAtLeast(1024)
         } catch (e: Exception) {
             2048
         }
@@ -71,7 +72,8 @@ object HardwareChecker {
             val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
             val memoryInfo = ActivityManager.MemoryInfo()
             activityManager?.getMemoryInfo(memoryInfo)
-            (memoryInfo.totalMem / (1024 * 1024)).toInt()
+            val mb = (memoryInfo.totalMem / (1024 * 1024)).toInt()
+            if (mb > 0) mb else (Runtime.getRuntime().maxMemory() / (1024 * 1024)).toInt().coerceAtLeast(2048)
         } catch (e: Exception) {
             4096
         }

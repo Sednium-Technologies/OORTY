@@ -25,23 +25,31 @@ object SedniumColors {
     val SedRed = Orange
 
     // ---- Theme-aware surfaces ----
-    val DarkBackground   = Color(0xFF333333)  // .dark body background-color
-    val DarkSurfaceAlt   = Color(0xFF333333)  // dark file-chip / card surface (MessageItem)
+    val DarkBackground   = Color(0xFF141414)  // pure neutral dark background
+    val DarkSurfaceAlt   = Color(0xFF1E1E1E)  // dark card / surface
+    val Charcoal900      = Color(0xFF121212)
+    val Charcoal800      = Color(0xFF1A1A1A)
+    val Charcoal700      = Color(0xFF262626)
+    val Charcoal600      = Color(0xFF383838)
+    val Charcoal500      = Color(0xFF666666)
+    val Charcoal400      = Color(0xFF9E9E9E)
+    val Charcoal300      = Color(0xFFCCCCCC)
+    val Charcoal100      = Color(0xFFF2F2F2)
     val White            = Color(0xFFFFFFFF)
     val Black            = Color(0xFF000000)
 
-    // ---- Neutral / gray scale (Tailwind "gray") used in markdown & message chrome ----
-    val Gray100 = Color(0xFFF3F4F6)
-    val Gray200 = Color(0xFFE5E7EB)
-    val Gray300 = Color(0xFFD1D5DB)
-    val Gray400 = Color(0xFF9CA3AF)
-    val Gray500 = Color(0xFF6B7280)
-    val Gray600 = Color(0xFF4B5563)   // also the dark-mode scrollbar thumb color
-    val Gray700 = Color(0xFF374151)
-    val Gray800 = Color(0xFF1F2937)
-    val Gray900 = Color(0xFF111827)
+    // ---- Neutral / gray scale used in markdown & message chrome (pure charcoal) ----
+    val Gray100 = Color(0xFFF4F4F4)
+    val Gray200 = Color(0xFFE6E6E6)
+    val Gray300 = Color(0xFFCCCCCC)
+    val Gray400 = Color(0xFF9E9E9E)
+    val Gray500 = Color(0xFF6B6B6B)
+    val Gray600 = Color(0xFF4A4A4A)
+    val Gray700 = Color(0xFF2E2E2E)
+    val Gray800 = Color(0xFF1E1E1E)
+    val Gray900 = Color(0xFF141414)
 
-    // ---- Status / semantic (Tailwind "red") used for error & destructive states ----
+    // ---- Status / semantic used for error & destructive states ----
     val Red100 = Color(0xFFFEE2E2)
     val Red500 = Color(0xFFEF4444)
     val Red600 = Color(0xFFDC2626)

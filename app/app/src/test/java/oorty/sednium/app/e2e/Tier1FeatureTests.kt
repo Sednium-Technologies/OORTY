@@ -15,6 +15,8 @@ import oorty.sednium.app.ui.components.*
 import oorty.sednium.app.model.*
 import oorty.sednium.app.ui.theme.*
 import oorty.sednium.app.api.*
+import oorty.sednium.app.mcp.*
+import oorty.sednium.app.navigation.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.*
@@ -203,8 +205,12 @@ class Tier1FeatureTests {
         }
         shadowPackageManager.addPackage(packageInfo)
         
-        val launchIntent = Intent(Intent.ACTION_MAIN).setPackage("com.termux")
-        shadowPackageManager.setLaunchIntentForPackage("com.termux", launchIntent)
+        val intentFilter = android.content.IntentFilter(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val componentName = android.content.ComponentName("com.termux", "com.termux.app.TermuxActivity")
+        shadowPackageManager.addActivityIfNotPresent(componentName)
+        shadowPackageManager.addIntentFilterForActivity(componentName, intentFilter)
 
         composeTestRule.setContent {
             UsageContent(settings = AppSettings())
@@ -215,7 +221,8 @@ class Tier1FeatureTests {
         val shadowApp = Shadows.shadowOf(context as android.app.Application)
         val nextIntent = shadowApp.nextStartedActivity
         assertNotNull("Launch intent targeting Termux should be fired", nextIntent)
-        assertEquals("com.termux", nextIntent.getPackage())
+        val targetPkg = nextIntent.getPackage() ?: nextIntent.component?.packageName
+        assertEquals("com.termux", targetPkg)
     }
 
     // -------------------------------------------------------------

@@ -24,6 +24,8 @@ import android.net.Uri
 var activeAppContext: Context? = null
 var activeGgufUri: Uri = Uri.EMPTY
 var activeLlamaHelper: LlamaHelper? = null
+var activeLiteRtUri: Uri = Uri.EMPTY
+var activeLiteRtHelper: LiteRtHelper? = null
 
 object ModelCache {
     private val cache = java.util.concurrent.ConcurrentHashMap<String, List<oorty.sednium.app.model.ModelOption>>()
@@ -498,7 +500,15 @@ suspend fun generateContentStream(
             val helper = activeLlamaHelper ?: LlamaHelper(
                 context = activeAppContext ?: throw IllegalStateException("Application context not initialized"),
                 uri = activeGgufUri
-            )
+            ).also { activeLlamaHelper = it }
+
+            if (!helper.isLoaded.value && activeGgufUri != Uri.EMPTY) {
+                val loadResult = helper.loadModel(activeGgufUri)
+                if (loadResult.isFailure) {
+                    throw loadResult.exceptionOrNull() ?: Exception("Failed loading GGUF model")
+                }
+            }
+
             helper.generateStream(
                 prompt = prompt,
                 systemInstruction = systemInstruction,
@@ -511,6 +521,35 @@ suspend fun generateContentStream(
             thoughtParser.flush()
         } catch (e: Exception) {
             val errorMsg = e.message ?: "Local GGUF execution failed"
+            emitChunk("Error: $errorMsg\n", null)
+            thoughtParser.flush()
+        }
+    } else if (provider == oorty.sednium.app.model.ModelProvider.LOCAL_LITERT) {
+        try {
+            val helper = activeLiteRtHelper ?: LiteRtHelper(
+                context = activeAppContext ?: throw IllegalStateException("Application context not initialized"),
+                uri = activeLiteRtUri
+            ).also { activeLiteRtHelper = it }
+
+            if (!helper.isLoaded.value && activeLiteRtUri != Uri.EMPTY) {
+                val loadResult = helper.loadModel(activeLiteRtUri)
+                if (loadResult.isFailure) {
+                    throw loadResult.exceptionOrNull() ?: Exception("Failed loading LiteRT model")
+                }
+            }
+
+            helper.generateStream(
+                prompt = prompt,
+                systemInstruction = systemInstruction,
+                history = history,
+                temperature = temperature,
+                maxTokens = maxTokens
+            ).collect { chunk ->
+                emitChunk(chunk, null)
+            }
+            thoughtParser.flush()
+        } catch (e: Exception) {
+            val errorMsg = e.message ?: "Local LiteRT execution failed"
             emitChunk("Error: $errorMsg\n", null)
             thoughtParser.flush()
         }
@@ -625,7 +664,7 @@ suspend fun testApiKey(apiKey: String, provider: oorty.sednium.app.model.ModelPr
 }
 
 suspend fun fetchDynamicModels(apiKey: String, provider: oorty.sednium.app.model.ModelProvider, localBaseUrl: String): List<oorty.sednium.app.model.ModelOption> = withContext(Dispatchers.IO) {
-    if (provider == oorty.sednium.app.model.ModelProvider.NONE || provider == oorty.sednium.app.model.ModelProvider.ROSETTE || provider == oorty.sednium.app.model.ModelProvider.LOCAL_GGUF) {
+    if (provider == oorty.sednium.app.model.ModelProvider.NONE || provider == oorty.sednium.app.model.ModelProvider.ROSETTE || provider == oorty.sednium.app.model.ModelProvider.LOCAL_GGUF || provider == oorty.sednium.app.model.ModelProvider.LOCAL_LITERT) {
         return@withContext emptyList()
     }
     val cleanApiKey = apiKey.trim()
@@ -645,7 +684,7 @@ suspend fun fetchDynamicModels(apiKey: String, provider: oorty.sednium.app.model
             val json = Json { ignoreUnknownKeys = true }
             val root = json.parseToJsonElement(response).jsonObject
             val models = root["models"]?.jsonArray
-            return@withContext models?.mapNotNull {
+            val googleModels = models?.mapNotNull {
                 val name = it.jsonObject["name"]?.jsonPrimitive?.content?.removePrefix("models/") ?: return@mapNotNull null
                 val displayName = it.jsonObject["displayName"]?.jsonPrimitive?.content ?: name
                 val lowerName = name.lowercase()
@@ -658,6 +697,10 @@ suspend fun fetchDynamicModels(apiKey: String, provider: oorty.sednium.app.model
                 }
                 oorty.sednium.app.model.ModelOption(name, displayName, icon)
             } ?: emptyList()
+            if (googleModels.isNotEmpty()) {
+                ModelCache.put(provider, cleanApiKey, localBaseUrl, googleModels)
+            }
+            return@withContext googleModels
         }
 
         // Generic OpenAI-compatible list models (Anthropic also using similar list models)

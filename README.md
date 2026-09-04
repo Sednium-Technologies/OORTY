@@ -1,18 +1,19 @@
 <div align="center">
-# 🍊 Oorty by Sednium
+# <img src="assets/oorty_icon.png" width="36" height="36" alt="Oorty" style="vertical-align: -6px;" /> Oorty by Sednium (v2.0)
 
-### *Multi-Model AI Chat, Local GGUF Inference & Autonomous Agentic Workspace*
+### *Multi-Model AI Chat, Dual On-Device Neural Inference (GGUF & LiteRT), Live Voice Mode & Autonomous Agentic Workspace*
 
+[![Version](https://img.shields.io/badge/version-2.0.0-EC5E27?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Sednium-Technologies/OORTY/releases)
 [![Website](https://img.shields.io/badge/website-oorty.sednium.com-EC5E27?style=for-the-badge&logo=googlechrome&logoColor=white)](https://oorty.sednium.com)
 [![Publisher](https://img.shields.io/badge/publisher-sednium.com-333333?style=for-the-badge&logo=shield&logoColor=white)](https://sednium.com)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Web-blue?style=for-the-badge&logo=android&logoColor=white)](https://github.com/CoderBhoid/oorty-landing)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Web-blue?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Sednium-Technologies/OORTY)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-M3%201.3.0-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 <br />
 
-**Oorty** is a warm, editorial-styled AI orchestrator that unifies **on-device native neural inference** (GGUF & LiteRT), **autonomous Model Context Protocol (MCP) agentic workflows**, **hybrid semantic memory recall**, and **direct Obsidian-compatible Markdown knowledge bases** into a single native Android app and web interface.
+**Oorty** is a warm, editorial-styled AI orchestrator that unifies **on-device native neural inference** (GGUF via llama.cpp and LiteRT via Google AI Edge), **autonomous Model Context Protocol (MCP) agentic workflows**, **hands-free live voice conversations**, **hybrid semantic memory recall**, and **direct Obsidian-compatible Markdown knowledge bases** into a native Android app and web interface.
 
 <br />
 
@@ -28,21 +29,25 @@
 
 ## 📑 Table of Contents
 
+- [🎉 What's New in v2.0 (Changelog)](#-whats-new-in-v20-changelog)
 - [🌟 Architectural Highlights](#-architectural-highlights)
 - [🏗️ System Architecture](#️-system-architecture)
 - [🚀 Key Capabilities](#-key-capabilities)
-  - [1. Native On-Device GGUF & LiteRT Engine](#1-native-on-device-gguf--litert-engine)
-  - [2. Obsidian-Compatible Markdown Vault (`Documents/Oorty/`)](#2-obsidian-compatible-markdown-vault-documentsoorty)
-  - [3. Dynamic RAM Watchdog & Hardware Safety](#3-dynamic-ram-watchdog--hardware-safety)
-  - [4. Hybrid Semantic Memory Recall](#4-hybrid-semantic-memory-recall)
-  - [5. Autonomous MCP Tool-Calling Framework](#5-autonomous-mcp-tool-calling-framework)
-  - [6. Multi-Provider Cloud Orchestration](#6-multi-provider-cloud-orchestration)
+  - [1. Zero-Mock Dual On-Device Engine (GGUF & LiteRT)](#1-zero-mock-dual-on-device-engine-gguf--litert)
+  - [2. Thinking Mode (Reasoning vs. Response Separation)](#2-thinking-mode-reasoning-vs-response-separation)
+  - [3. Modernized UI/UX, Pill Composer & Lucide Icons](#3-modernized-uiux-pill-composer--lucide-icons)
+  - [4. Live Hands-Free Voice Mode & Real-Time STT](#4-live-hands-free-voice-mode--real-time-stt)
+  - [5. Post-Response Action Toolbar & Branching](#5-post-response-action-toolbar--branching)
+  - [6. Obsidian-Compatible Markdown Vault (`Documents/Oorty/`)](#6-obsidian-compatible-markdown-vault-documentsoorty)
+  - [7. Dynamic RAM Watchdog & Loading Overlay](#7-dynamic-ram-watchdog--loading-overlay)
+  - [8. Autonomous MCP Framework & Device Tools](#8-autonomous-mcp-framework--device-tools)
+  - [9. Multi-Provider Cloud Orchestration](#9-multi-provider-cloud-orchestration)
 - [📱 Hardware Fit & RAM Recommendation Matrix](#-hardware-fit--ram-recommendation-matrix)
 - [📂 Repository Structure](#-repository-structure)
 - [🛠️ Getting Started (Local Development)](#️-getting-started-local-development)
   - [Prerequisites](#prerequisites)
-  - [Building the Android App](#building-the-android-app)
-  - [Running on Termux (On-Device Local Server)](#running-on-termux-on-device-local-server)
+  - [Building & Installing the Android App](#building--installing-the-android-app)
+  - [Running the Unit & E2E Test Suites](#running-the-unit--e2e-test-suites)
   - [Running the Landing Page](#running-the-landing-page)
 - [⚙️ Configuration & Secrets](#️-configuration--secrets)
 - [🧪 Testing & Quality Assurance](#-testing--quality-assurance)
@@ -52,27 +57,51 @@
 
 ---
 
+## 🎉 What's New in v2.0 (Changelog)
+
+### 🧠 1. Dual On-Device Inference (Zero-Mock Native GGUF + Google AI Edge LiteRT)
+- **Eliminated All Canned Mocks**: Completely replaced reflection fallbacks with direct, native bindings to `org.nehuatl.llamacpp.LlamaHelper`, streaming real tokens directly from memory-mapped `.gguf` weights.
+- **Added Google AI Edge LiteRT Engine**: Introduced `LiteRtHelper` utilizing `com.google.ai.edge.litert:litert:2.1.0` with XNNPACK hardware acceleration and automatic thread pooling for `.tflite` and `.litertlm` models.
+- **Hugging Face Hub Format Sorter**: Integrated format filter chips (**All Models**, **GGUF (llama.cpp)**, **LiteRT (Google AI Edge)**) and format badges on model cards with curated LiteRT SLMs (Gemma 2 2B, MobileBERT, GOT-OCR).
+- **Full-Screen Loading Overlay**: Fixed state lifecycle so `ModelLoadingOverlay` shows actual RAM verification, loading progress, and a 1.5-second success checkmark delay rather than unmounting instantaneously.
+
+### 🎨 2. UI/UX Modernization & Design Craft
+- **Thinking Mode Separation**: Upgraded `StreamingThoughtParser` to cleanly split `<thought>` chains from final answers. Collapsible thought block preserves reasoning time and token count without polluting or truncating final responses.
+- **Lucide Outline Icon Family**: Modernized the entire app's iconography with a cohesive, uniform stroke-weight icon system (`LucideIcons.kt`).
+- **Pill-Shaped Message Composer**: Rebuilt composer with true pill radius, plus icon for attachment/tool tray, live speech-to-text mic, and up-arrow send button.
+- **Live Hands-Free Voice Mode**: Added a dedicated hands-free conversation overlay (`LiveModeOverlay` / `VoiceConversationOverlay`) with real-time waveform visualization.
+- **Clean Borderless AI Responses**: Removed card containers for assistant messages—text renders directly on the warm editorial background.
+- **Post-Response Action Toolbar**: Added quick actions beneath every assistant message: Copy, Share, Branch Chat, Send to Another Model, Read Aloud (TTS), and Regenerate.
+- **User Prompt Editing**: Support for long-press editing of user messages with automatic downstream regeneration.
+- **Rich Media Viewers**: Native Compose views for AI-generated images (`ImageResultView`), audio (`AudioResultView`), and video (`VideoResultView`).
+
+### 🛠️ 3. Agentic MCP & Extensibility
+- **Device Tools**: Added native device tool executions (`DeviceTools.kt`) for MCP agents (app launching, status querying, system notifications).
+- **Plugin Architecture**: Added a multi-category plugin subsystem with a user-friendly onboarding flow (`PluginOnboardingScreen.kt`).
+
+---
+
 ## 🌟 Architectural Highlights
 
 <table>
   <tr>
     <td width="50%">
-      <h3>🔒 Privacy-First Native AI</h3>
-      <p>Run open-weights models (<b>Qwen 2.5</b>, <b>Llama 3.2</b>, <b>Phi-3 Mini</b>, <b>Gemma 2</b>) 100% offline via native GGUF engine with real-time tokens/sec telemetry.</p>
+      <h3>🔒 Zero-Mock On-Device AI</h3>
+      <p>Run open-weights models (<b>Qwen 2.5</b>, <b>Llama 3.2</b>, <b>Phi-3 Mini</b>, <b>Gemma 2</b>) 100% offline via native GGUF and Google AI Edge LiteRT with real-time tok/s telemetry.</p>
     </td>
     <td width="50%">
       <h3>📝 Obsidian-Native Vault</h3>
-      <p>Chats are dual-written to public storage as clean <code>.md</code> notes with YAML frontmatter, timestamps, estimated tokens, and topic tags.</p>
+      <p>Chats are dual-written to public storage (<code>Documents/Oorty/</code>) as clean Markdown notes with YAML frontmatter, timestamps, estimated tokens, and topic tags.</p>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <h3>🧠 Hybrid Semantic Recall</h3>
-      <p>384-dimensional dense semantic vectors compute cosine similarity to passively inject relevant past discussions into the AI's memory before every prompt.</p>
+      <h3>🎙️ Live Voice Mode</h3>
+      <p>Hands-free continuous voice interaction with real-time listening, thinking, and speaking state feedback with audio waveforms.</p>
     </td>
     <td width="50%">
-      <h3>🛠️ MCP Autonomous Agent</h3>
-      <p>Model Context Protocol (MCP) tool-calling execution loop with support for both cloud models and small on-device quantized models.</p>
+      <h3>🛠️ Autonomous MCP Agent</h3>
+      <p>Model Context Protocol (MCP) tool execution loop supporting cloud flagships, local SLMs, device tools, and custom plugins.</p>
     </td>
   </tr>
 </table>
@@ -84,10 +113,10 @@
 ```mermaid
 flowchart TD
     subgraph UI ["📱 User Interface Layer (Jetpack Compose / Material 3)"]
-        ChatScreen["ChatScreen\n• Stream Renderer\n• tok/s & TTFT Stats\n• Agent Badges"]
-        SettingsScreen["SettingsScreen\n• GGUF Model Browser\n• Preset Editor\n• HuggingFace Downloader"]
-        Overlay["ModelLoadingOverlay\n• Circular Loader\n• Animated Checkmark\n• Wait Notifications"]
-        RAMDialog["HardwareWarningDialog\n• Dynamic RAM Check\n• Load Anyway / Cancel"]
+        ChatScreen["ChatScreen\n• Stream Renderer\n• tok/s & TTFT Stats\n• Post-Response Actions"]
+        SettingsScreen["SettingsScreen\n• GGUF & LiteRT Browser\n• HF Format Sorter\n• Hardware Profiler"]
+        Overlay["ModelLoadingOverlay\n• Circular Loader\n• Animated Checkmark\n• RAM Safety Feedback"]
+        LiveMode["VoiceConversationOverlay\n• Hands-Free Audio Loop\n• Waveform Visualizer"]
     end
 
     subgraph Core ["🧠 Core Orchestrator & Dispatch"]
@@ -98,8 +127,8 @@ flowchart TD
     end
 
     subgraph Engines ["⚡ Inference Engines"]
-        LlamaHelper["LlamaHelper (GGUF)\n• Native Flow Stream\n• Real-time tok/s"]
-        LiteRTTitle["LiteRtTitleGen\n• TF-IDF Keyword Extraction\n• Fast Title Generator"]
+        LlamaEngine["LlamaHelper (llama.cpp)\n• Native GGUF MMap\n• Real-Time tok/s Stream"]
+        LiteRtEngine["LiteRtHelper (Google AI Edge)\n• .tflite & .litertlm\n• XNNPACK Acceleration"]
         CloudAPIs["Cloud Providers\n• Gemini • Claude • GPT-4o\n• Groq • OpenRouter • NVIDIA NIM"]
     end
 
@@ -125,114 +154,100 @@ flowchart TD
 
 ## 🚀 Key Capabilities
 
-### 1. Native On-Device GGUF & LiteRT Engine
+### 1. Zero-Mock Dual On-Device Engine (GGUF & LiteRT)
 
-Oorty features zero-cloud fallback capability by utilizing `llamacpp-kotlin` and Google LiteRT:
-- **Streaming Output**: Token-by-token streaming via Kotlin Coroutines `Flow<String>`.
-- **Telemetry**: Measures real-time tokens per second (tok/s) and Time-to-First-Token (TTFT).
-- **Persistent Storage Access (SAF)**: Utilizes `takePersistableUriPermission` to retain access to user-selected GGUF files across device reboots.
-- **Title Generation**: Embedded TF-IDF keyword extraction generates clean, concise conversation titles in <10ms without consuming GPU memory.
-
-<details>
-<summary><b>🔍 View GGUF Provider Code Sample</b></summary>
-
-```kotlin
-// Streaming directly from on-device GGUF memory
-val helper = LlamaHelper(context = applicationContext, uri = ggufUri)
-helper.generateStream(
-    prompt = "Explain coroutine dispatchers in Kotlin",
-    systemInstruction = settings.currentSystemInstruction
-).collect { tokenChunk ->
-    chatViewModel.appendToken(tokenChunk)
-}
-```
-</details>
+Oorty features zero-cloud fallback capability by utilizing native `llama.cpp` and Google AI Edge LiteRT:
+- **Streaming Output**: Token-by-token streaming via Kotlin Coroutines `SharedFlow<LLMEvent>`.
+- **Zero Mocks**: All canned mock responses removed; genuine native execution only.
+- **Telemetry**: Measures real-time tokens per second (`tok/s`) and Time-to-First-Token (`TTFT`).
+- **Persistent Storage Access (SAF)**: Utilizes `takePersistableUriPermission` to retain access to user-selected model weights across device reboots.
+- **Hardware Acceleration**: Automatic multi-threading and XNNPACK delegate enablement.
 
 ---
 
-### 2. Obsidian-Compatible Markdown Vault (`Documents/Oorty/`)
+### 2. Thinking Mode (Reasoning vs. Response Separation)
+
+Oorty separates model reasoning from final answers:
+- **Dedicated Reasoning Parser**: Detects `<thought>` or `<think>` tags in real-time.
+- **Collapsible UI**: Thoughts collapse neatly into a "Thought Process" block showing elapsed thinking time.
+- **Clean Message History**: Only clean final answers populate chat cards, vault notes, and TTS readers.
+
+---
+
+### 3. Modernized UI/UX, Pill Composer & Lucide Icons
+
+- **True Pill Composer**: Built with a dedicated pill radius, integrated attachment drawer (`+`), live voice dictation mic, and send up-arrow.
+- **Unified Lucide Icons**: Consistent, high-craft outline iconography across all dialogs and screens.
+- **Borderless AI Responses**: Clean editorial aesthetic where assistant responses blend naturally with the background.
+
+---
+
+### 4. Live Hands-Free Voice Mode & Real-Time STT
+
+- **Continuous Voice Loop**: Speak naturally with automatic voice activity detection, real-time transcription, and immediate audio playback.
+- **Fluid Waveform Overlay**: Visual feedback for listening, thinking, and speaking states.
+
+---
+
+### 5. Post-Response Action Toolbar & Branching
+
+- **Copy & Share**: Immediate one-tap copying and system sharing.
+- **Branch Chat**: Fork a new discussion thread from any point in the conversation history.
+- **Send to Another Model**: Compare answers side-by-side across different providers.
+- **Read Aloud**: Native text-to-speech engine playback.
+- **Prompt Editing**: Tap and edit prior user messages with automatic downstream regeneration.
+
+---
+
+### 6. Obsidian-Compatible Markdown Vault (`Documents/Oorty/`)
 
 Every chat session is preserved as an open Markdown file in `Documents/Oorty/chats/`:
 - **Obsidian-Ready**: Open `Documents/Oorty/` directly as an Obsidian Vault.
 - **Structured YAML Frontmatter**: Includes `id`, `title`, `created`, `updated`, `model`, `provider`, `total_tokens_est`, `tags`, and `message_count`.
-- **Granular Message Headers**: Formatted with user/bot avatars, precise timestamps, estimated token usage, and latency.
-
-```markdown
----
-id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-title: "Kotlin RecyclerView Implementation"
-created: "2026-08-27T17:02:42+05:30"
-updated: "2026-08-27T17:15:00+05:30"
-model: "Qwen2.5-0.5B-Instruct"
-provider: "LOCAL_GGUF"
-total_tokens_est: 3420
-tags: ["kotlin", "recyclerview", "android", "viewbinding"]
-message_count: 4
-has_attachments: false
----
-
-# Kotlin RecyclerView Implementation
-
-## 🧑 User — 17:02
-How do I implement a RecyclerView with ListAdapter in Kotlin?
-
-## 🤖 Oorty (Qwen2.5-0.5B-Instruct) — 17:03 | ~680 tokens | 0.8s TTFT | 28.4 tok/s
-Here is a clean implementation using `ListAdapter` and `DiffUtil.ItemCallback`...
-```
+- **Granular Message Headers**: Formatted with timestamps, estimated token usage, and latency.
 
 ---
 
-### 3. Dynamic RAM Watchdog & Hardware Safety
+### 7. Dynamic RAM Watchdog & Loading Overlay
 
-Loading large neural network models on mobile devices can cause Out-Of-Memory (OOM) crashes and system freezes. Oorty includes an active memory watchdog:
-- Queries **real-time available RAM** via `ActivityManager.MemoryInfo.availMem` (not just static total RAM).
-- Categorizes model fit into:
-  - 🟢 **Comfortable Fit** (Model < 55% of free RAM): Smooth performance.
-  - 🟠 **Tight Fit** (Model 55%–85% of free RAM): Warning dialog displayed.
-  - 🔴 **High Crash Risk** (Model > 85% of free RAM): Prompts user to pick a smaller quantization (e.g., Q4_K_M instead of Q8_0).
-
----
-
-### 4. Hybrid Semantic Memory Recall
-
-Oorty possesses persistent memory across chat sessions:
-- **384-Dimensional Embedding Space**: Uses subword n-gram feature hashing and TF-IDF weighting to compute dense unit-normalized semantic vectors.
-- **Cosine Similarity Ranking**: Ranks past conversations against the user's current query.
-- **Automatic Context Injection**: Injects the top 3 most relevant conversation excerpts into the system prompt before each generation turn.
-- **Explicit Tool (`recall_from_vault`)**: Allows AI agents to actively search the vault for deep research queries.
+- **Pre-Load Safety Audit**: Compares model file size against real-time available memory.
+- **Safety Categories**:
+  - 🟢 **Comfortable Fit** (< 55% free RAM): Smooth operation.
+  - 🟠 **Tight Fit** (55%–85% free RAM): Warning advisory.
+  - 🔴 **High Crash Risk** (> 85% free RAM): Prompts user to choose a lighter quantization.
+- **Full-Screen Feedback**: Shows memory stats, loading progress bar, and 1.5s success confirmation.
 
 ---
 
-### 5. Autonomous MCP Tool-Calling Framework
+### 8. Autonomous MCP Framework & Device Tools
 
-- Implements the open standard **Model Context Protocol (MCP)**.
-- Connects to remote and local MCP servers for tools like file management, bash execution, web search, and data analysis.
-- Supports **Prompt-Based Tool Calling** on local GGUF models (<3B parameters) with automatic JSON extraction and graceful degradation.
+- **Model Context Protocol (MCP)**: Run multi-step tool calls with local and remote servers.
+- **Device Tools**: Direct mobile capabilities including app launching and system info queries.
+- **Plugin Architecture**: Modular, extensible toolsets with guided setup.
 
 ---
 
-### 6. Multi-Provider Cloud Orchestration
+### 9. Multi-Provider Cloud Orchestration
 
-Connect to any leading AI provider using your own API keys:
+Connect to leading cloud AI providers with your own API keys:
 - 🔵 **Google Gemini** (Gemini 2.5 Flash, Gemini 2.5 Pro, Flash Thinking)
 - 🟣 **Anthropic** (Claude 3.5 Sonnet, Claude 3.7 Sonnet)
 - 🟢 **OpenAI** (GPT-4o, GPT-4o-mini, o1, o3-mini)
 - ⚡ **Groq** (Llama 3.3 70B, DeepSeek R1 Distill)
-- 🌌 **OpenRouter** (Unified access to 200+ models)
+- 🌌 **OpenRouter** (200+ models)
 - 🟢 **NVIDIA NIM** (Nemotron 70B, Cosmos, NV-Embed)
 - 🔴 **xAI** (Grok 2, Grok Beta)
-- 🛡️ **Sednium Rosette Gateway** (Multi-agent routing and NLP analytics)
 
 ---
 
 ## 📱 Hardware Fit & RAM Recommendation Matrix
 
-| Device RAM | Recommended GGUF Model | Quantization | Est. Model RAM | Agentic Support |
+| Device RAM | Recommended Local Model | Format | Est. Model RAM | Agentic Support |
 | :--- | :--- | :--- | :--- | :--- |
-| **4 GB RAM** | `Qwen2.5-0.5B-Instruct` | Q4_K_M | ~450 MB | ⚡ Limited (Basic) |
-| **6 GB RAM** | `Llama-3.2-1B-Instruct` | Q4_K_M | ~850 MB | ⚡ Limited (Fast) |
-| **8 GB RAM** | `Gemma-2-2B-IT` | Q4_K_M | ~1.6 GB | ✅ Moderate |
-| **12 GB+ RAM** | `Phi-3-mini-4k` / `Llama-3.1-8B` | Q4_K_M | ~2.4 – 4.8 GB | 🚀 Full Autonomous |
+| **4 GB RAM** | `Qwen2.5-0.5B-Instruct` | GGUF (Q4_K_M) | ~450 MB | ⚡ Basic |
+| **6 GB RAM** | `Llama-3.2-1B-Instruct` | GGUF (Q4_K_M) | ~850 MB | ⚡ Fast |
+| **8 GB RAM** | `Gemma-2-2B-IT` | GGUF / LiteRT | ~1.6 GB | ✅ Moderate |
+| **12 GB+ RAM** | `Phi-3-mini-4k` / `Llama-3.1-8B` | GGUF (Q4_K_M) | ~2.4 – 4.8 GB | 🚀 Full Autonomous |
 
 ---
 
@@ -242,30 +257,33 @@ Connect to any leading AI provider using your own API keys:
 Oorty/
 ├── app/                               # Native Android Application
 │   ├── app/
-│   │   ├── src/main/
-│   │   │   ├── java/oorty/sednium/app/
-│   │   │   │   ├── api/               # LlamaHelper, LiteRtTitleGen, UniversalApi, HuggingFaceApi
-│   │   │   │   ├── model/             # Models, ChatSession, AppSettings, ProviderConfig
-│   │   │   │   ├── mcp/               # ToolCallOrchestrator, LocalGgufToolChatClient, VaultRecallTool
-│   │   │   │   ├── vault/             # ChatVault, ChatVaultEntry, EmbeddingEngine, VaultIndexer
-│   │   │   │   ├── util/              # HardwareChecker (RAM detection)
-│   │   │   │   ├── ui/                # Jetpack Compose Screens & Components
-│   │   │   │   │   ├── screens/       # ChatScreen, SettingsScreen, PromptLabScreen, ChatListScreen
-│   │   │   │   │   ├── components/    # ModelLoadingOverlay, HardwareWarningDialog, ChatBubble
-│   │   │   │   │   └── theme/         # SedniumColors (#FDFBF7, #EC5E27), Animations, Type
-│   │   │   │   └── MainActivity.kt    # Root Application Coordinator & State Container
-│   │   │   └── AndroidManifest.xml    # Permissions, largeHeap, queries
-│   │   └── build.gradle.kts           # Kotlin 2.2, Compose, LiteRT, llamacpp dependencies
-│   └── gradle/                        # Gradle Wrapper & Version Catalog (libs.versions.toml)
-├── website/                           # Public Static Web Application & Landing Page
-│   ├── assets/                        # Brand vector graphics, typography, audio assets
-│   ├── css/                           # Vanilla CSS Design System
-│   ├── js/                            # Client-side web chat logic & Rosette client
-│   └── index.html                     # Web entry point
-├── rosette.md                         # Rosette Gateway multi-agent specification
-├── ai.md                              # Encrypted .ai V3 context interchange spec
-├── config.yaml                        # LiteLLM Proxy / NVIDIA NIM routing configuration
-└── README.md                          # Master documentation
+│   │   ├── src/
+│   │   │   ├── main/
+│   │   │   │   ├── java/oorty/sednium/app/
+│   │   │   │   │   ├── api/           # LlamaHelper, LiteRtHelper, UniversalApi, HuggingFaceApi
+│   │   │   │   │   ├── model/         # Models, ChatSession, AppSettings, ProviderConfig
+│   │   │   │   │   ├── mcp/           # ToolCallOrchestrator, DeviceTools, LocalGgufToolChatClient
+│   │   │   │   │   ├── plugins/       # Extensible Plugin Architecture & Providers
+│   │   │   │   │   ├── vault/         # ChatVault, EmbeddingEngine, VaultIndexer
+│   │   │   │   │   ├── util/          # HardwareChecker (RAM detection & safe fallbacks)
+│   │   │   │   │   ├── ui/            # Jetpack Compose UI
+│   │   │   │   │   │   ├── screens/   # ChatScreen, SettingsScreen, PromptLabScreen, ChatListScreen
+│   │   │   │   │   │   ├── components/# ModelLoadingOverlay, MessageComposer, LiveModeOverlay
+│   │   │   │   │   │   └── theme/     # SedniumColors, LucideIcons, Typography, Shape
+│   │   │   │   │   └── MainActivity.kt# Root Application Coordinator
+│   │   │   │   └── AndroidManifest.xml# Permissions, largeHeap, providers
+│   │   │   └── test/                  # Automated Test Suites
+│   │   │       └── java/oorty/sednium/app/
+│   │   │           ├── api/           # LocalEngineZeroMockTests.kt (Zero-mock verification)
+│   │   │           ├── vault/         # VaultAndLocalModelTests.kt (Vault & recall tests)
+│   │   │           └── e2e/           # Tier1FeatureTests.kt (End-to-end flow tests)
+│   │   └── build.gradle.kts           # Kotlin 2.2, Compose M3, LiteRT, llamacpp AARs
+│   └── gradle/                        # Gradle Wrapper & Version Catalogs
+├── website/                           # Web Landing Page & Hosted Client
+├── TASKS.md                           # Development Milestones & Task Tracker
+├── UI_REVAMP.md                       # UI/UX Revamp Specification
+├── PROJECT.md                         # Master Architecture Blueprint
+└── README.md                          # Documentation & Quickstart
 ```
 
 ---
@@ -275,62 +293,49 @@ Oorty/
 ### Prerequisites
 
 - **Android Studio Ladybug (2024.2+)** or command-line Gradle.
-- **JDK 17** (`openjdk-17-jdk`).
-- **Android SDK Platform 36** with Build-Tools `35.0.0+`.
-- Physical Android Device (Android 8.0+ / API 26+) or Android Emulator with x86_64 image.
+- **JDK 17 or JDK 21**.
+- **Android SDK Platform 35/36** with Build-Tools `35.0.0+`.
+- Physical Android Device (Android 8.0+ / API 26+) or Android Emulator.
 
 ---
 
-### Building the Android App
+### Building & Installing the Android App
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/CoderBhoid/oorty-landing.git
-   cd oorty-landing/app
+   git clone https://github.com/Sednium-Technologies/OORTY.git
+   cd OORTY/app
    ```
 
-2. **Configure API Secrets (Optional for Cloud Providers):**
-   ```bash
-   cp .env.example .env
-   # Populate GOOGLE_API_KEY, ANTHROPIC_API_KEY, etc.
-   ```
-
-3. **Compile and Run Unit Tests:**
-   ```bash
-   ./gradlew testDebugUnitTest
-   ```
-
-4. **Assemble Debug APK:**
+2. **Assemble the Debug APK:**
    ```bash
    ./gradlew assembleDebug
    ```
-   *The generated APK will be located at:* `app/app/build/outputs/apk/debug/app-debug.apk`
+   *Output binary:* `app/app/build/outputs/apk/debug/app-debug.apk` (~90 MB with all native `.so` libraries).
 
-5. **Install on Connected Device:**
+3. **Install on Connected Device via ADB:**
    ```bash
    adb install -r app/app/build/outputs/apk/debug/app-debug.apk
    ```
 
+4. **Launch Application:**
+   ```bash
+   adb shell am start -n oorty.sednium.app/.MainActivity
+   ```
+
 ---
 
-### Running on Termux (On-Device Local Server)
-
-If you prefer running a background local `llama.cpp` server directly inside Termux on your phone:
+### Running the Unit & E2E Test Suites
 
 ```bash
-# 1. Update Termux packages
-pkg update && pkg install clang git cmake
+# Run all local JVM Robolectric unit tests
+./gradlew :app:testDebugUnitTest
 
-# 2. Clone and build llama.cpp with ARM NEON support
-git clone https://github.com/ggerganov/llama.cpp
-cd llama.cpp
-make -j4
+# Verify zero-mock local inference engines (GGUF & LiteRT)
+./gradlew :app:testDebugUnitTest --tests "oorty.sednium.app.api.LocalEngineZeroMockTests"
 
-# 3. Launch server with your GGUF model
-./llama-server -m ~/storage/shared/Documents/Oorty/models/model.gguf -c 2048 --port 8080
-
-# 4. In Oorty Settings -> LOCAL SERVER -> Set Base URL to:
-# http://localhost:8080/v1
+# Verify Vault storage, semantic recall & hardware profiler
+./gradlew :app:testDebugUnitTest --tests "oorty.sednium.app.vault.VaultAndLocalModelTests"
 ```
 
 ---
@@ -347,7 +352,7 @@ python3 -m http.server 8000
 
 ## ⚙️ Configuration & Secrets
 
-In Android, API keys and credentials can be entered directly in the **Settings** screen (persisted encrypted locally) or supplied via `.env` file during build:
+API keys are encrypted and stored in local Android private storage, or configured via `.env`:
 
 | Variable | Provider / Feature | Description |
 | :--- | :--- | :--- |
@@ -358,40 +363,18 @@ In Android, API keys and credentials can be entered directly in the **Settings**
 | `OPENROUTER_API_KEY` | OpenRouter | Multi-model routing key |
 | `NVIDIA_API_KEY` | NVIDIA NIM | Key from build.nvidia.com |
 | `XAI_API_KEY` | xAI Grok | Key from x.ai console |
-| `ROSETTE_API_KEY` | Rosette Gateway | Multi-agent orchestrator key |
 
----
-
-## 🧪 Testing & Quality Assurance
-
-Oorty features a dual-layer test infrastructure ensuring UI responsiveness, theme compatibility, and memory safety:
-
-```bash
-# Run all local JVM Robolectric tests
-./gradlew :app:testDebugUnitTest
-
-# Run specific E2E feature verification suite
-./gradlew :app:testDebugUnitTest --tests "oorty.sednium.app.e2e.Tier1FeatureTests"
-
-# Run Vault & On-Device inference unit tests
-./gradlew :app:testDebugUnitTest --tests "oorty.sednium.app.vault.VaultAndLocalModelTests"
-```
-
-### Test Coverage Highlights:
-- **`Tier1FeatureTests.kt`**: Mipmap icons, Termux integration, HuggingFace search filters, RAM recommendation badges, theme background adherence (`#333333` dark mode), and LiteRT ByteBuffer fallbacks.
-- **`VaultAndLocalModelTests.kt`**: Markdown frontmatter serialization, TF-IDF keyword extraction, Cosine similarity vectors, and `recall_from_vault` tool execution.
+*(Note: Local GGUF and Local LiteRT inference requires **zero** API keys or accounts.)*
 
 ---
 
 ## 📖 Connecting Oorty to Obsidian
 
-Since Oorty stores all conversations in standard Markdown at `Documents/Oorty/chats/`, you can sync your chat vault with **Obsidian**:
-
-1. Open the **Obsidian Mobile App** on Android.
+1. Open the **Obsidian Mobile App** on your Android device.
 2. Tap **"Open folder as vault"**.
-3. Navigate to **`Documents/Oorty/`** and tap **"Use this folder"**.
+3. Select **`Documents/Oorty/`**.
 4. Grant storage permissions.
-5. All your chats will instantly appear with clickable YAML frontmatter tags, headers, and code snippets!
+5. All your chats will render with clickable tags, metadata frontmatter, code blocks, and timestamps.
 
 ---
 
@@ -400,22 +383,22 @@ Since Oorty stores all conversations in standard Markdown at `Documents/Oorty/ch
 <details>
 <summary><b>1. Model fails to load or app freezes during GGUF loading</b></summary>
 
-- **Cause**: Out-of-memory or thermal throttling.
-- **Fix**: Check `HardwareWarningDialog`. Choose a 4-bit quantized model (`Q4_K_M`) under 1GB (such as `Qwen2.5-0.5B` or `Llama-3.2-1B`). Close background apps before loading.
+- **Cause**: Out-of-memory or thermal throttling on high parameter models.
+- **Fix**: Check `HardwareWarningDialog`. Choose a 4-bit quantized model (`Q4_K_M`) under 1.5GB (e.g., `Qwen2.5-0.5B` or `Llama-3.2-1B`).
 </details>
 
 <details>
-<summary><b>2. "Permission Denied" when reading selected GGUF file</b></summary>
+<summary><b>2. "Permission Denied" when reading selected model file</b></summary>
 
 - **Cause**: Android Storage Access Framework (SAF) URI expired.
-- **Fix**: Oorty automatically calls `takePersistableUriPermission`. If files are moved in external file managers, re-select the model in **Settings > API & MODELS > GGUF MODEL FILE**.
+- **Fix**: Oorty automatically calls `takePersistableUriPermission`. If files are moved in external file managers, re-select the model in **Settings > Model Settings**.
 </details>
 
 <details>
-<summary><b>3. MCP Tools not executing on Local GGUF models</b></summary>
+<summary><b>3. LiteRT models failing on custom hardware</b></summary>
 
-- **Cause**: Very small models (<1B) sometimes output unstructured text instead of tool JSON.
-- **Fix**: Ensure **Chat Mode** is set to **CODING** or **THINKING** which formats prompts with explicit tool schemas, or use models with ≥2B parameters (`Gemma-2-2B` or `Phi-3-mini`).
+- **Cause**: Incompatible delegate execution on older NPU/DSP chips.
+- **Fix**: `LiteRtHelper` automatically detects delegate failures and falls back smoothly to multi-threaded CPU execution with XNNPACK acceleration.
 </details>
 
 ---

@@ -70,9 +70,12 @@ fun CodeBlockView(
     var showPreview by remember { mutableStateOf(false) }
 
     val isPreviewable = language?.lowercase() in listOf("html", "svg", "xml")
-    val highlighted = remember(code, language) { SyntaxHighlighter.highlight(code, language, isDark) }
-    val lineCount = remember(code) { code.count { it == '\n' } + 1 }
-    val lineNumberWidth = remember(lineCount) { (lineCount.toString().length * 9 + 12).dp }
+    val cleanCode = remember(code) { code.trimEnd('\r', '\n') }
+    val highlighted = remember(cleanCode, language) { SyntaxHighlighter.highlight(cleanCode, language, isDark) }
+    val lineCount = remember(cleanCode) { cleanCode.count { it == '\n' } + 1 }
+    val digitCount = remember(lineCount) { lineCount.toString().length.coerceAtLeast(2) }
+    val lineNumberWidth = remember(digitCount) { (digitCount * 10 + 20).dp }
+    val lineNumbersText = remember(lineCount) { (1..lineCount).joinToString("\n") }
 
     if (showPreview) {
         Dialog(
@@ -88,7 +91,7 @@ fun CodeBlockView(
                                 settings.domStorageEnabled = true
                                 webChromeClient = WebChromeClient()
                                 webViewClient = WebViewClient()
-                                loadDataWithBaseURL(null, code, "text/html", "utf-8", null)
+                                loadDataWithBaseURL(null, cleanCode, "text/html", "utf-8", null)
                             }
                         },
                         modifier = Modifier.fillMaxSize()
@@ -141,7 +144,7 @@ fun CodeBlockView(
                 }
                 IconButton(
                     onClick = {
-                        clipboard.setText(AnnotatedString(code))
+                        clipboard.setText(AnnotatedString(cleanCode))
                         justCopied = true
                         scope.launch { delay(1500); justCopied = false }
                     },
@@ -166,19 +169,18 @@ fun CodeBlockView(
                 .horizontalScroll(rememberScrollState())
                 .padding(vertical = 10.dp)
         ) {
-            Column(
-                modifier = Modifier.width(lineNumberWidth).padding(end = 8.dp, start = 12.dp),
-            ) {
-                repeat(lineCount) { idx ->
-                    Text(
-                        text = (idx + 1).toString(),
-                        color = Color(0xFF6E7681),
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 12.sp,
-                        lineHeight = 18.sp
-                    )
-                }
-            }
+            Text(
+                text = lineNumbersText,
+                color = Color(0xFF6E7681),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                softWrap = false,
+                modifier = Modifier
+                    .width(lineNumberWidth)
+                    .padding(start = 8.dp, end = 10.dp)
+            )
 
             SelectionContainer {
                 Text(
@@ -186,6 +188,7 @@ fun CodeBlockView(
                     fontFamily = FontFamily.Monospace,
                     fontSize = 12.sp,
                     lineHeight = 18.sp,
+                    softWrap = false,
                     modifier = Modifier.padding(end = 16.dp)
                 )
             }

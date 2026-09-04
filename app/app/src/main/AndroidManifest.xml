@@ -15,8 +15,32 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
+
     <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
         <package android:name="com.termux" />
+        <package android:name="com.termux.x11" />
+        <package android:name="com.android.chrome" />
+        <package android:name="com.google.android.youtube" />
+        <package android:name="com.google.android.apps.youtube.music" />
+        <package android:name="app.morphe.android.youtube" />
+        <package android:name="com.google.android.apps.maps" />
+        <package android:name="md.obsidian" />
+        <package android:name="org.telegram.messenger" />
+        <package android:name="com.spotify.music" />
+        <package android:name="com.instagram.android" />
+        <package android:name="com.twitter.android" />
+        <package android:name="com.discord" />
+        <package android:name="com.google.android.gm" />
+        <package android:name="com.android.settings" />
+        <package android:name="com.android.camera" />
+        <package android:name="com.google.android.calculator" />
     </queries>
 
     <application

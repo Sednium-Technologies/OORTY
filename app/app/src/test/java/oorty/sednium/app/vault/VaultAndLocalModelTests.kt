@@ -146,7 +146,8 @@ class VaultAndLocalModelTests {
 
         val result = VaultRecallTool.execute(vaultIndexer, args)
         assertFalse("Vault recall should succeed", result.isError)
-        assertTrue("Result should contain relevant snippet", result.content.first().toPlainText().contains("Database Room Setup"))
+        val firstBlock = result.content.first() as oorty.sednium.app.mcp.ContentBlock.Text
+        assertTrue("Result should contain relevant snippet", firstBlock.text.contains("Database Room Setup"))
     }
 
     @Test

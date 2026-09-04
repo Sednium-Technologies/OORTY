@@ -14,9 +14,14 @@ import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
 
+enum class HfModelFormat {
+    GGUF, LITERT
+}
+
 data class HfGgufFile(
     val path: String,
-    val sizeBytes: Long
+    val sizeBytes: Long,
+    val format: HfModelFormat = if (path.endsWith(".tflite", ignoreCase = true) || path.endsWith(".litertlm", ignoreCase = true)) HfModelFormat.LITERT else HfModelFormat.GGUF
 )
 
 object HuggingFaceApi {
@@ -44,8 +49,10 @@ object HuggingFaceApi {
                 val obj = element.jsonObject
                 val path = obj["path"]?.jsonPrimitive?.content ?: return@mapNotNull null
                 val size = obj["size"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L
-                if (path.endsWith(".gguf", ignoreCase = true)) {
-                    HfGgufFile(path = path, sizeBytes = size)
+                val lower = path.lowercase()
+                if (lower.endsWith(".gguf") || lower.endsWith(".tflite") || lower.endsWith(".litertlm")) {
+                    val fmt = if (lower.endsWith(".tflite") || lower.endsWith(".litertlm")) HfModelFormat.LITERT else HfModelFormat.GGUF
+                    HfGgufFile(path = path, sizeBytes = size, format = fmt)
                 } else null
             }
         } catch (e: Exception) {

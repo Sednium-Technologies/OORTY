@@ -87,8 +87,15 @@ data class HuggingFaceModelItem(
     val downloads: Int = 0,
     val likes: Int = 0,
     val defaultQuant: String = "Q4_K_M",
-    val estimatedSize: String = "2.1 GB"
+    val estimatedSize: String = "2.1 GB",
+    val format: oorty.sednium.app.api.HfModelFormat = oorty.sednium.app.api.HfModelFormat.GGUF
 )
+
+enum class HfModelFilter(val label: String) {
+    ALL("All Models"),
+    GGUF("GGUF (llama.cpp)"),
+    LITERT("LiteRT (Google AI Edge)")
+}
 
 private val CURATED_MODELS = listOf(
     HuggingFaceModelItem("Qwen/Qwen2.5-0.5B-Instruct-GGUF", "Qwen", "Qwen2.5 0.5B Instruct", 450000, 1200, "Q4_K_M", "390 MB"),
@@ -105,7 +112,11 @@ private val CURATED_MODELS = listOf(
     HuggingFaceModelItem("bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF", "DeepSeek / bartowski", "DeepSeek R1 Distill Qwen 7B", 780000, 5200, "Q4_K_M", "4.8 GB"),
     HuggingFaceModelItem("bartowski/DeepSeek-R1-Distill-Qwen-14B-GGUF", "DeepSeek / bartowski", "DeepSeek R1 Distill Qwen 14B", 560000, 3900, "Q4_K_M", "9.2 GB"),
     HuggingFaceModelItem("bartowski/DeepSeek-R1-Distill-Qwen-32B-GGUF", "DeepSeek / bartowski", "DeepSeek R1 Distill Qwen 32B", 310000, 2800, "Q4_K_M", "19.8 GB"),
-    HuggingFaceModelItem("Qwen/Qwen2.5-14B-Instruct-GGUF", "Qwen", "Qwen2.5 14B Instruct", 430000, 2700, "Q4_K_M", "9.0 GB")
+    HuggingFaceModelItem("Qwen/Qwen2.5-14B-Instruct-GGUF", "Qwen", "Qwen2.5 14B Instruct", 430000, 2700, "Q4_K_M", "9.0 GB"),
+    HuggingFaceModelItem("google/gemma-2-2b-it-litert", "google", "Gemma 2 2B (LiteRT)", 320000, 1850, "INT8", "1.4 GB", oorty.sednium.app.api.HfModelFormat.LITERT),
+    HuggingFaceModelItem("google/gemma-2b-it-tflite", "google", "Gemma 2B IT (.tflite)", 280000, 1500, "INT8", "1.3 GB", oorty.sednium.app.api.HfModelFormat.LITERT),
+    HuggingFaceModelItem("google/mobilebert-tflite", "google", "MobileBERT (.tflite)", 190000, 890, "FP16", "120 MB", oorty.sednium.app.api.HfModelFormat.LITERT),
+    HuggingFaceModelItem("stepfun-ai/GOT-OCR2_0-Mobile-tflite", "stepfun-ai", "GOT-OCR 2.0 (.tflite)", 110000, 640, "INT8", "14 MB", oorty.sednium.app.api.HfModelFormat.LITERT)
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -126,6 +137,7 @@ fun HuggingFaceHubDialog(
 
     var searchQuery by remember { mutableStateOf("") }
     var onlyShowPlayable by remember { mutableStateOf(true) }
+    var selectedFormatFilter by remember { mutableStateOf(HfModelFilter.ALL) }
     var isSearchingOnline by remember { mutableStateOf(false) }
     var modelList by remember { mutableStateOf(CURATED_MODELS) }
     val scope = rememberCoroutineScope()
@@ -224,7 +236,7 @@ fun HuggingFaceHubDialog(
                         )
                     }
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Filled.Close, contentDescription = "Close", tint = accentColor)
+                        Icon(oorty.sednium.app.ui.theme.OortyIcons.Close, contentDescription = "Close", tint = accentColor)
                     }
                 }
 
@@ -242,13 +254,13 @@ fun HuggingFaceHubDialog(
                         if (isSearchingOnline) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = accentColor, strokeWidth = 2.dp)
                         } else {
-                            Icon(Icons.Filled.Search, contentDescription = "Search", tint = accentColor)
+                            Icon(oorty.sednium.app.ui.theme.OortyIcons.Search, contentDescription = "Search", tint = accentColor)
                         }
                     },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = ""; modelList = CURATED_MODELS }) {
-                                Icon(Icons.Filled.Close, contentDescription = "Clear", tint = accentColor)
+                                Icon(oorty.sednium.app.ui.theme.OortyIcons.Close, contentDescription = "Clear", tint = accentColor)
                             }
                         }
                     },
@@ -262,6 +274,32 @@ fun HuggingFaceHubDialog(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Format filter chips (All, GGUF, LiteRT)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    HfModelFilter.values().forEach { filter ->
+                        val isSelected = selectedFormatFilter == filter
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSelected) accentColor else (if (isDark) Color(0xFF262626) else OrangeAlpha.a10))
+                                .clickable { selectedFormatFilter = filter }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                filter.label,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) SedniumColors.Milk else (if (isDark) SedniumColors.Gray300 else SedniumColors.Orange)
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -295,10 +333,15 @@ fun HuggingFaceHubDialog(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Models List
-                val displayedList = remember(modelList, onlyShowPlayable, context) {
-                    if (!onlyShowPlayable) modelList
-                    else modelList.filter {
-                        HardwareChecker.getSuitability(it.id, context) != ModelSuitability.NOT_ABLE_TO_RUN
+                val displayedList = remember(modelList, onlyShowPlayable, selectedFormatFilter, context) {
+                    modelList.filter { item ->
+                        val matchesPlayable = !onlyShowPlayable || HardwareChecker.getSuitability(item.id, context) != ModelSuitability.NOT_ABLE_TO_RUN
+                        val matchesFormat = when (selectedFormatFilter) {
+                            HfModelFilter.ALL -> true
+                            HfModelFilter.GGUF -> item.format == oorty.sednium.app.api.HfModelFormat.GGUF
+                            HfModelFilter.LITERT -> item.format == oorty.sednium.app.api.HfModelFormat.LITERT
+                        }
+                        matchesPlayable && matchesFormat
                     }
                 }
 
@@ -356,19 +399,39 @@ fun HuggingFaceHubDialog(
                                             )
                                         }
 
-                                        // Suitability Tag Badge
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(suitability.badgeColor)
-                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                suitability.label,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = suitability.textColor,
-                                                fontWeight = FontWeight.Bold
-                                            )
+                                            // Format Engine Badge
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(if (item.format == oorty.sednium.app.api.HfModelFormat.LITERT) Color(0x2610B981) else Color(0x26F59E0B))
+                                                    .padding(horizontal = 6.dp, vertical = 3.dp)
+                                            ) {
+                                                Text(
+                                                    if (item.format == oorty.sednium.app.api.HfModelFormat.LITERT) "LiteRT" else "GGUF",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = if (item.format == oorty.sednium.app.api.HfModelFormat.LITERT) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+
+                                            // Suitability Tag Badge
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(suitability.badgeColor)
+                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            ) {
+                                                Text(
+                                                    suitability.label,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = suitability.textColor,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
                                         }
                                     }
 
@@ -403,7 +466,7 @@ fun HuggingFaceHubDialog(
                                             ),
                                             modifier = Modifier.weight(1f).height(36.dp)
                                         ) {
-                                            Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(14.dp))
+                                            Icon(oorty.sednium.app.ui.theme.OortyIcons.Check, contentDescription = null, modifier = Modifier.size(14.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(if (isSelected) "Active Model" else "Select Model", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                                         }
@@ -420,7 +483,7 @@ fun HuggingFaceHubDialog(
                                                 .clip(RoundedCornerShape(SedniumRadii.sm))
                                                 .background(if (isDark) Color(0xFF333333) else OrangeAlpha.a10)
                                         ) {
-                                            Icon(Icons.Filled.ContentCopy, contentDescription = "Copy Repo", tint = accentColor, modifier = Modifier.size(16.dp))
+                                            Icon(oorty.sednium.app.ui.theme.OortyIcons.Copy, contentDescription = "Copy Repo", tint = accentColor, modifier = Modifier.size(16.dp))
                                         }
 
                                         IconButton(
@@ -433,7 +496,7 @@ fun HuggingFaceHubDialog(
                                                 .clip(RoundedCornerShape(SedniumRadii.sm))
                                                 .background(if (isDark) Color(0xFF333333) else OrangeAlpha.a10)
                                         ) {
-                                            Icon(Icons.Filled.OpenInBrowser, contentDescription = "Open in HF", tint = accentColor, modifier = Modifier.size(16.dp))
+                                            Icon(oorty.sednium.app.ui.theme.OortyIcons.ExternalLink, contentDescription = "Open in HF", tint = accentColor, modifier = Modifier.size(16.dp))
                                         }
                                     }
                                 }

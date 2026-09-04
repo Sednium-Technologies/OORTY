@@ -47,10 +47,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.border
 import oorty.sednium.app.ui.components.BufferedFadingMarkdown
 import oorty.sednium.app.ui.components.SettingsTextField
 import oorty.sednium.app.ui.theme.OrangeAlpha
 import oorty.sednium.app.ui.theme.SedniumColors
+import oorty.sednium.app.ui.theme.SedniumRadii
 
 /** The three single-turn tools shipped in v1 — same set as Gallery's Prompt Lab. */
 enum class PromptLabTool(val label: String, val placeholder: String, val systemPrompt: String) {
@@ -80,9 +82,9 @@ enum class PromptLabTool(val label: String, val placeholder: String, val systemP
 }
 
 private fun iconFor(tool: PromptLabTool) = when (tool) {
-    PromptLabTool.SUMMARIZE -> Icons.Filled.Summarize
-    PromptLabTool.REWRITE -> Icons.Filled.AutoFixHigh
-    PromptLabTool.CODE_GEN -> Icons.Filled.Code
+    PromptLabTool.SUMMARIZE -> oorty.sednium.app.ui.theme.OortyIcons.FileText
+    PromptLabTool.REWRITE -> oorty.sednium.app.ui.theme.OortyIcons.Sparkles
+    PromptLabTool.CODE_GEN -> oorty.sednium.app.ui.theme.OortyIcons.Code
 }
 
 /** Optional tone/style modifier, only shown when Rewrite is the active tool. */
@@ -128,7 +130,7 @@ fun PromptLabScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back to chat", tint = SedniumColors.Orange)
+                    Icon(oorty.sednium.app.ui.theme.OortyIcons.ArrowLeft, contentDescription = "Back to chat", tint = SedniumColors.Orange)
                 }
                 Text(
                     "Prompt Lab",
@@ -227,7 +229,7 @@ fun PromptLabScreen(
                         }
                     },
                     enabled = input.isNotBlank() && !isRunning,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(SedniumRadii.pill),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SedniumColors.Orange,
                         contentColor = SedniumColors.Milk,
@@ -240,7 +242,7 @@ fun PromptLabScreen(
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = SedniumColors.Milk)
                         Text("  Running…", style = MaterialTheme.typography.labelLarge)
                     } else {
-                        Text("Run ${selectedTool.label}", style = MaterialTheme.typography.labelLarge)
+                        Text("Run ${selectedTool.label}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -249,26 +251,24 @@ fun PromptLabScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 16.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(SedniumRadii.lg))
                             .background(OrangeAlpha.a05)
-                            .padding(14.dp)
+                            .border(1.dp, OrangeAlpha.a20, RoundedCornerShape(SedniumRadii.lg))
+                            .padding(16.dp)
                     ) {
-                        SelectionContainer {
-                            BufferedFadingMarkdown(
-                                content = output,
-                                isDark = isDark,
-                                isStreaming = isRunning
-                            )
+                        Column {
+                            Text(output, style = MaterialTheme.typography.bodyMedium, color = SedniumColors.Orange)
                         }
                     }
 
-                    if (!isRunning) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp)) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             OutlinedButton(
                                 onClick = { clipboard.setText(androidx.compose.ui.text.AnnotatedString(output)) },
+                                shape = RoundedCornerShape(SedniumRadii.pill),
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(Icons.Filled.ContentCopy, contentDescription = null, tint = SedniumColors.Orange, modifier = Modifier.size(16.dp))
@@ -276,6 +276,7 @@ fun PromptLabScreen(
                             }
                             OutlinedButton(
                                 onClick = { onSendToChat(selectedTool, input, output) },
+                                shape = RoundedCornerShape(SedniumRadii.pill),
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(Icons.Filled.Chat, contentDescription = null, tint = SedniumColors.Orange, modifier = Modifier.size(16.dp))

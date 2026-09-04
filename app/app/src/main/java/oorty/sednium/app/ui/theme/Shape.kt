@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
  */
 object SedniumRadii {
     val sm = 8.dp     // rounded-lg      -> attachment chips, file badges
+    val squircle = 10.dp // squircle avatar/icon container
     val md = 12.dp    // rounded-xl      -> drawer rows, buttons
     val lg = 16.dp     // rounded-2xl     -> avatar squares, preset menu
     val xl = 24.dp    // rounded-[24px]  -> larger cards

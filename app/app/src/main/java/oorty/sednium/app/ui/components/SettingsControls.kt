@@ -91,7 +91,7 @@ fun SettingsSliderRow(
                         modifier = Modifier.size(24.dp).padding(end = 8.dp)
                     ) {
                         androidx.compose.material3.Icon(
-                            androidx.compose.material.icons.Icons.Filled.Refresh,
+                            imageVector = oorty.sednium.app.ui.theme.OortyIcons.Refresh,
                             contentDescription = "Reset $label",
                             tint = OrangeAlpha.a70,
                             modifier = Modifier.size(14.dp)
@@ -128,26 +128,29 @@ fun SettingsTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val isDark = oorty.sednium.app.ui.theme.LocalSedniumIsDark.current
+    val accentColor = if (isDark) SedniumColors.DarkOrange else SedniumColors.Orange
+
     Column(modifier = modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         if (label.isNotEmpty()) {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = OrangeAlpha.a70, fontWeight = FontWeight.Bold)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a70, fontWeight = FontWeight.Bold)
         }
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             singleLine = singleLine,
             readOnly = readOnly,
-            placeholder = { Text(placeholder, color = OrangeAlpha.a40) },
+            placeholder = { Text(placeholder, color = if (isDark) SedniumColors.Gray500 else OrangeAlpha.a40) },
             visualTransformation = if (isSecret) androidx.compose.ui.text.input.PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(if (singleLine) SedniumRadii.pill else SedniumRadii.lg),
             trailingIcon = trailingIcon,
             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedBorderColor = SedniumColors.Orange,
-                unfocusedBorderColor = OrangeAlpha.a30,
-                focusedTextColor = SedniumColors.Orange,
-                unfocusedTextColor = SedniumColors.Orange
+                focusedContainerColor = if (isDark) SedniumColors.Charcoal800 else Color.Transparent,
+                unfocusedContainerColor = if (isDark) SedniumColors.Charcoal800 else Color.Transparent,
+                focusedBorderColor = accentColor,
+                unfocusedBorderColor = if (isDark) SedniumColors.Charcoal700 else OrangeAlpha.a30,
+                focusedTextColor = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange,
+                unfocusedTextColor = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange
             ),
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
         )

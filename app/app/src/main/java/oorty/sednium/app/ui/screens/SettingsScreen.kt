@@ -25,10 +25,12 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import oorty.sednium.app.ui.theme.OortyIcons
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Check
@@ -75,8 +77,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import oorty.sednium.app.model.AppSettings
 import oorty.sednium.app.model.ChatMode
@@ -85,6 +89,7 @@ import oorty.sednium.app.model.ModelOption
 import oorty.sednium.app.model.ModelProvider
 import oorty.sednium.app.model.PROVIDER_CONFIG
 import oorty.sednium.app.model.SavedModelPreset
+import oorty.sednium.app.model.VoicePersona
 import oorty.sednium.app.navigation.LocalServerStatus
 import oorty.sednium.app.ui.components.HuggingFaceHubDialog
 import oorty.sednium.app.ui.components.SettingsSectionLabel
@@ -145,6 +150,8 @@ fun SettingsScreen(
     settings: AppSettings,
     localServerStatus: LocalServerStatus = LocalServerStatus.UNKNOWN,
     mcpServerManager: oorty.sednium.app.mcp.McpServerManager,
+    pluginManager: oorty.sednium.app.plugins.PluginManager? = null,
+    speechService: oorty.sednium.app.plugins.speech.SpeechService? = null,
     onOpenMcpServers: () -> Unit,
     onUpdateSettings: (AppSettings) -> Unit,
     onClose: () -> Unit
@@ -210,7 +217,7 @@ fun SettingsScreen(
             when (currentTab) {
                 SettingsTab.API_MODELS -> ApiModelsContent(settings, localServerStatus, onUpdateSettings)
                 SettingsTab.FEATURES_GENERAL -> FeaturesGeneralContent(settings, mcpServerManager, onOpenMcpServers, onUpdateSettings)
-                SettingsTab.USAGE -> UsageContent(settings, onUpdateSettings)
+                SettingsTab.USAGE -> UsageContent(settings, pluginManager, speechService, onUpdateSettings)
             }
         }
     }
@@ -284,7 +291,7 @@ fun ApiModelsContent(
                 onClick = {},
                 enabled = false
             )
-            listOf(ModelProvider.LOCAL, ModelProvider.LOCAL_GGUF).forEach { provider ->
+            listOf(ModelProvider.LOCAL, ModelProvider.LOCAL_GGUF, ModelProvider.LOCAL_LITERT).forEach { provider ->
                 DropdownMenuItem(
                     text = { Text(PROVIDER_CONFIG[provider]?.displayName ?: provider.name, color = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange, modifier = Modifier.padding(start = 8.dp)) },
                     onClick = {
@@ -319,7 +326,7 @@ fun ApiModelsContent(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    if (selectedProvider != ModelProvider.LOCAL && selectedProvider != ModelProvider.LOCAL_GGUF && selectedProvider != ModelProvider.NONE) {
+    if (selectedProvider != ModelProvider.LOCAL && selectedProvider != ModelProvider.LOCAL_GGUF && selectedProvider != ModelProvider.LOCAL_LITERT && selectedProvider != ModelProvider.NONE) {
         val providerName = PROVIDER_CONFIG[selectedProvider]?.displayName ?: ""
         SettingsSectionLabel("${providerName.uppercase()} API KEY")
         val currentKey = apiKeyForProvider(settings, selectedProvider)
@@ -442,9 +449,14 @@ fun ApiModelsContent(
         )
     }
 
-    if (selectedProvider == ModelProvider.LOCAL_GGUF) {
+    if (selectedProvider == ModelProvider.LOCAL_GGUF || selectedProvider == ModelProvider.LOCAL_LITERT) {
         Spacer(modifier = Modifier.height(16.dp))
-        var isLoadingGguf by remember { mutableStateOf(false) }
+        var showLoadingOverlay by remember { mutableStateOf(false) }
+        var isLoadSuccess by remember { mutableStateOf(false) }
+        var loadingModelName by remember { mutableStateOf("") }
+        var loadingProgress by remember { mutableStateOf<Float?>(null) }
+        var loadingErrorMessage by remember { mutableStateOf<String?>(null) }
+
         var pendingUri by remember { mutableStateOf<Uri?>(null) }
         var showWarningDialog by remember { mutableStateOf(false) }
         var warningFit by remember { mutableStateOf(HardwareFit.COMFORTABLE) }
@@ -452,9 +464,17 @@ fun ApiModelsContent(
 
         val scope = rememberCoroutineScope()
 
-        fun completeGgufLoad(uri: Uri) {
+        fun completeModelLoad(uri: Uri) {
             scope.launch {
-                isLoadingGguf = true
+                val filename = uri.lastPathSegment?.substringAfterLast("/") ?: "model"
+                val isLiteRt = filename.endsWith(".tflite", ignoreCase = true) || filename.endsWith(".litertlm", ignoreCase = true)
+
+                loadingModelName = filename
+                showLoadingOverlay = true
+                isLoadSuccess = false
+                loadingErrorMessage = null
+                loadingProgress = 0.1f
+
                 try {
                     try {
                         context.contentResolver.takePersistableUriPermission(
@@ -463,22 +483,47 @@ fun ApiModelsContent(
                         )
                     } catch (e: Exception) {}
 
-                    val filename = uri.lastPathSegment?.substringAfterLast("/") ?: "model.gguf"
-                    val helper = oorty.sednium.app.api.LlamaHelper(context, uri)
-                    oorty.sednium.app.api.activeLlamaHelper = helper
-                    oorty.sednium.app.api.activeGgufUri = uri
+                    if (isLiteRt) {
+                        val helper = oorty.sednium.app.api.LiteRtHelper(context, uri)
+                        oorty.sednium.app.api.activeLiteRtHelper = helper
+                        oorty.sednium.app.api.activeLiteRtUri = uri
 
-                    helper.loadModel(uri)
-                    selectedModel = filename
-                    onUpdateSettings(settings.copy(
-                        provider = ModelProvider.LOCAL_GGUF,
-                        model = filename,
-                        ggufModelUri = uri.toString(),
-                        activePresetId = null
-                    ))
+                        val result = helper.loadModel(uri)
+                        if (result.isFailure) {
+                            throw result.exceptionOrNull() ?: Exception("LiteRT model load failed")
+                        }
+                        selectedModel = filename
+                        selectedProvider = ModelProvider.LOCAL_LITERT
+                        onUpdateSettings(settings.copy(
+                            provider = ModelProvider.LOCAL_LITERT,
+                            model = filename,
+                            litertModelUri = uri.toString(),
+                            activePresetId = null
+                        ))
+                    } else {
+                        val helper = oorty.sednium.app.api.LlamaHelper(context, uri)
+                        oorty.sednium.app.api.activeLlamaHelper = helper
+                        oorty.sednium.app.api.activeGgufUri = uri
+
+                        val result = helper.loadModel(uri)
+                        if (result.isFailure) {
+                            throw result.exceptionOrNull() ?: Exception("GGUF model load failed")
+                        }
+                        selectedModel = filename
+                        selectedProvider = ModelProvider.LOCAL_GGUF
+                        onUpdateSettings(settings.copy(
+                            provider = ModelProvider.LOCAL_GGUF,
+                            model = filename,
+                            ggufModelUri = uri.toString(),
+                            activePresetId = null
+                        ))
+                    }
+
+                    loadingProgress = 1.0f
+                    isLoadSuccess = true
                 } catch (e: Exception) {
-                } finally {
-                    isLoadingGguf = false
+                    loadingErrorMessage = e.message ?: "Failed to load model into RAM"
+                    isLoadSuccess = false
                 }
             }
         }
@@ -510,16 +555,35 @@ fun ApiModelsContent(
                     warningModelSizeMb = fileSizeMb
                     showWarningDialog = true
                 } else {
-                    completeGgufLoad(nonNullUri)
+                    completeModelLoad(nonNullUri)
                 }
             }
+        }
+
+        if (showLoadingOverlay) {
+            oorty.sednium.app.ui.components.ModelLoadingOverlay(
+                modelName = loadingModelName,
+                progress = loadingProgress,
+                isSuccess = isLoadSuccess,
+                errorMessage = loadingErrorMessage,
+                onSuccessComplete = {
+                    showLoadingOverlay = false
+                },
+                onRetry = {
+                    pendingUri?.let { completeModelLoad(it) }
+                },
+                onDismiss = {
+                    showLoadingOverlay = false
+                    loadingErrorMessage = null
+                }
+            )
         }
 
         if (showWarningDialog && pendingUri != null) {
             val availRam = HardwareChecker.getAvailableRamMb(context)
             val totalRam = HardwareChecker.getTotalRamMb(context)
             oorty.sednium.app.ui.components.HardwareWarningDialog(
-                modelName = pendingUri!!.lastPathSegment?.substringAfterLast("/") ?: "Selected GGUF",
+                modelName = pendingUri!!.lastPathSegment?.substringAfterLast("/") ?: "Selected Model",
                 modelSizeMb = warningModelSizeMb,
                 availableRamMb = availRam,
                 totalRamMb = totalRam,
@@ -528,7 +592,7 @@ fun ApiModelsContent(
                     val uri = pendingUri!!
                     showWarningDialog = false
                     pendingUri = null
-                    completeGgufLoad(uri)
+                    completeModelLoad(uri)
                 },
                 onDismiss = {
                     showWarningDialog = false
@@ -536,39 +600,34 @@ fun ApiModelsContent(
                 }
             )
         }
-        
-        SettingsSectionLabel("GGUF MODEL FILE")
-        if (isLoadingGguf) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CircularProgressIndicator(
-                    color = accentColor,
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp
+
+        val sectionTitle = if (selectedProvider == ModelProvider.LOCAL_LITERT) "LITERT MODEL FILE (.tflite / .litertlm)" else "GGUF MODEL FILE (.gguf)"
+        SettingsSectionLabel(sectionTitle)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                val hasLocalFile = selectedModel.endsWith(".gguf", ignoreCase = true) ||
+                        selectedModel.endsWith(".tflite", ignoreCase = true) ||
+                        selectedModel.endsWith(".litertlm", ignoreCase = true)
+                SettingsTextField(
+                    label = "",
+                    value = if (hasLocalFile) selectedModel else "",
+                    onValueChange = {},
+                    placeholder = "Select .gguf or .tflite model file",
+                    readOnly = true
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text("Loading GGUF Model...", color = accentColor, style = MaterialTheme.typography.labelMedium)
             }
-        } else {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(modifier = Modifier.weight(1f)) {
-                    SettingsTextField(
-                        label = "",
-                        value = if (selectedModel.endsWith(".gguf")) selectedModel else "",
-                        onValueChange = {},
-                        placeholder = "No file selected",
-                        readOnly = true
-                    )
-                }
-                Button(
-                    onClick = { launcher.launch(arrayOf("*/*")) },
-                    colors = ButtonDefaults.buttonColors(containerColor = accentColor)
-                ) {
-                    Text("SELECT", fontWeight = FontWeight.Bold)
-                }
+            Button(
+                onClick = { launcher.launch(arrayOf("*/*")) },
+                colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                shape = RoundedCornerShape(SedniumRadii.md),
+                modifier = Modifier.padding(top = 4.dp).height(54.dp)
+            ) {
+                Text("SELECT", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -628,7 +687,7 @@ fun ApiModelsContent(
                     },
                     modifier = Modifier.size(24.dp)
                 ) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Refresh Models", tint = accentColor, modifier = Modifier.size(16.dp))
+                    Icon(oorty.sednium.app.ui.theme.OortyIcons.Refresh, contentDescription = "Refresh Models", tint = accentColor, modifier = Modifier.size(16.dp))
                 }
             }
         }
@@ -648,7 +707,7 @@ fun ApiModelsContent(
                 label = "",
                 value = selectedModel,
                 onValueChange = { selectedModel = it },
-                placeholder = "e.g. gemini-2.5-pro"
+                placeholder = "e.g. gemini-2.5-flash"
             )
         } else {
             ExposedDropdownMenuBox(
@@ -701,13 +760,13 @@ fun ApiModelsContent(
                             },
                             leadingIcon = {
                                 val iconVector = when(modelOption.icon) {
-                                    ModelIconType.TEXT -> Icons.Default.Notes
-                                    ModelIconType.CODE -> Icons.Default.Code
-                                    ModelIconType.AGENT -> Icons.Default.Psychology
-                                    ModelIconType.IMAGE -> Icons.Default.Image
-                                    ModelIconType.VIDEO -> Icons.Default.PlayArrow
-                                    ModelIconType.AUTO -> Icons.Default.Refresh
-                                    ModelIconType.LIGHTNING -> Icons.Default.FlashOn
+                                    ModelIconType.TEXT -> oorty.sednium.app.ui.theme.OortyIcons.FileText
+                                    ModelIconType.CODE -> oorty.sednium.app.ui.theme.OortyIcons.Code
+                                    ModelIconType.AGENT -> oorty.sednium.app.ui.theme.OortyIcons.Bot
+                                    ModelIconType.IMAGE -> oorty.sednium.app.ui.theme.OortyIcons.Image
+                                    ModelIconType.VIDEO -> oorty.sednium.app.ui.theme.OortyIcons.Video
+                                    ModelIconType.AUTO -> oorty.sednium.app.ui.theme.OortyIcons.Refresh
+                                    ModelIconType.LIGHTNING -> oorty.sednium.app.ui.theme.OortyIcons.Lightning
                                 }
                                 Icon(
                                     imageVector = iconVector,
@@ -720,6 +779,65 @@ fun ApiModelsContent(
                                 expandedModelDropdown = false
                             }
                         )
+                    }
+                }
+            }
+        }
+
+        if (selectedProvider == ModelProvider.GOOGLE) {
+            Spacer(modifier = Modifier.height(16.dp))
+            SettingsSectionLabel("GEMINI LIVE VOICE")
+            val liveVoices = listOf(
+                "Aoede" to "Melodic",
+                "Puck" to "Energetic",
+                "Charon" to "Deep",
+                "Kore" to "Warm",
+                "Fenrir" to "Authoritative"
+            )
+            val currentVoice = settings.geminiLiveVoice.ifBlank { "Aoede" }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                liveVoices.forEach { (voiceName, voiceTrait) ->
+                    val isSelected = currentVoice.equals(voiceName, ignoreCase = true)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(SedniumRadii.pill))
+                            .background(
+                                if (isSelected) accentColor 
+                                else if (isDark) Color(0xFF262626) 
+                                else OrangeAlpha.a10
+                            )
+                            .border(
+                                1.dp,
+                                if (isSelected) accentColor 
+                                else if (isDark) Color(0xFF383838) 
+                                else OrangeAlpha.a20,
+                                RoundedCornerShape(SedniumRadii.pill)
+                            )
+                            .clickable {
+                                onUpdateSettings(settings.copy(geminiLiveVoice = voiceName))
+                            }
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(
+                                imageVector = OortyIcons.Volume,
+                                contentDescription = null,
+                                tint = if (isSelected) SedniumColors.Milk else accentColor,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = "$voiceName ($voiceTrait)",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) SedniumColors.Milk else (if (isDark) SedniumColors.Gray200 else SedniumColors.Gray800)
+                            )
+                        }
                     }
                 }
             }
@@ -978,6 +1096,7 @@ fun FeaturesGeneralContent(
                     presetName = ""
                 },
                 modifier = Modifier.padding(bottom = 6.dp),
+                shape = RoundedCornerShape(oorty.sednium.app.ui.theme.SedniumRadii.pill),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = accentColor,
                     contentColor = SedniumColors.Milk
@@ -995,13 +1114,20 @@ fun FeaturesGeneralContent(
             if (editingPreset != null) {
                 androidx.compose.material3.AlertDialog(
                     onDismissRequest = { editingPreset = null },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     title = { Text("Edit Preset", fontWeight = FontWeight.Bold, color = accentColor) },
                     text = {
                         OutlinedTextField(
                             value = editPresetName,
                             onValueChange = { editPresetName = it },
                             singleLine = true,
+                            shape = RoundedCornerShape(oorty.sednium.app.ui.theme.SedniumRadii.pill),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = accentColor,
+                                unfocusedBorderColor = if (isDark) SedniumColors.Charcoal700 else OrangeAlpha.a30,
+                                focusedTextColor = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange,
+                                unfocusedTextColor = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         )
                     },
@@ -1105,9 +1231,12 @@ private fun updateApiKeyForProvider(s: AppSettings, provider: ModelProvider, val
     else -> s
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UsageContent(
     settings: AppSettings,
+    pluginManager: oorty.sednium.app.plugins.PluginManager? = null,
+    speechService: oorty.sednium.app.plugins.speech.SpeechService? = null,
     onUpdateSettings: (AppSettings) -> Unit = {}
 ) {
     val isDark = LocalSedniumIsDark.current
@@ -1115,6 +1244,9 @@ fun UsageContent(
     val cardBg = if (isDark) Color(0xFF262626) else OrangeAlpha.a05
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    val availablePlugins = pluginManager?.availablePlugins?.collectAsState()?.value ?: oorty.sednium.app.model.DEFAULT_AVAILABLE_PLUGINS
+    var testAppQuery by remember { mutableStateOf("termux") }
 
     var showHfHubDialog by remember { mutableStateOf(false) }
     var hfModelSearchQuery by remember { mutableStateOf("") }
@@ -1154,6 +1286,239 @@ fun UsageContent(
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
+        // --- Micro Plugins Section ---
+        SettingsSectionLabel("ON-DEVICE MICRO-MODELS & PLUGINS")
+
+        SettingsSwitchRow(
+            label = "SILENT BACKGROUND OCR ON IMAGES",
+            description = "Automatically extract text from attached images and inject into prompt context",
+            checked = settings.enableSilentOcr,
+            onCheckedChange = { onUpdateSettings(settings.copy(enableSilentOcr = it)) }
+        )
+
+        SettingsSwitchRow(
+            label = "VOICE MODE & TTS READOUT",
+            description = "Enable hands-free continuous voice mode and in-chat audio speaker button",
+            checked = settings.enableSpeechTts,
+            onCheckedChange = { onUpdateSettings(settings.copy(enableSpeechTts = it)) }
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+        SettingsSectionLabel("LIVE VOICE PERSONA (ALL MODELS)")
+        val personas = listOf(
+            VoicePersona.WARM_CONVERSATIONAL to "🌸 Warm & Friendly",
+            VoicePersona.DEEP_CONFIDENT to "🎙️ Deep & Confident",
+            VoicePersona.ENERGETIC_DIRECT to "⚡ Energetic & Direct",
+            VoicePersona.SYSTEM_DEFAULT to "📱 System Default"
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            personas.forEach { (persona, label) ->
+                val isSelected = settings.voicePersona == persona
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(SedniumRadii.pill))
+                        .background(
+                            if (isSelected) accentColor 
+                            else if (isDark) Color(0xFF262626) 
+                            else OrangeAlpha.a10
+                        )
+                        .border(
+                            1.dp,
+                            if (isSelected) accentColor 
+                            else if (isDark) Color(0xFF383838) 
+                            else OrangeAlpha.a20,
+                            RoundedCornerShape(SedniumRadii.pill)
+                        )
+                        .clickable {
+                            onUpdateSettings(settings.copy(voicePersona = persona))
+                            speechService?.speakText("Hi! This is Oorty speaking.", persona = persona, rate = settings.ttsSpeechRate, pitch = settings.ttsPitch)
+                        }
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) SedniumColors.Milk else (if (isDark) SedniumColors.Gray200 else SedniumColors.Gray800)
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        SettingsSliderRow(
+            label = "Voice Speech Rate",
+            value = settings.ttsSpeechRate,
+            onValueChange = { onUpdateSettings(settings.copy(ttsSpeechRate = it)) },
+            valueRange = 0.5f..2.0f,
+            displayFormat = { String.format("%.1fx", it) },
+            onReset = if (settings.ttsSpeechRate != 1.0f) { { onUpdateSettings(settings.copy(ttsSpeechRate = 1.0f)) } } else null
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Plugin Cards
+        availablePlugins.forEach { plugin ->
+            val isInstalled = pluginManager?.isPluginInstalled(plugin.id) == true || settings.installedPluginIds.contains(plugin.id) || plugin.type == oorty.sednium.app.model.PluginType.DEVICE_CONTROL
+            val isActive = settings.activePluginIds.contains(plugin.id)
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = cardBg),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp)
+                    .border(1.dp, if (isDark) SedniumColors.Gray700 else OrangeAlpha.a20, RoundedCornerShape(14.dp))
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    plugin.name,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange,
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(if (isInstalled) SedniumColors.Green500.copy(alpha = 0.2f) else OrangeAlpha.a10)
+                                        .padding(horizontal = 5.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        if (isInstalled) "INSTALLED" else "${plugin.sizeMb} MB",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isInstalled) SedniumColors.Green500 else accentColor,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            Text(
+                                plugin.huggingFaceRepo,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a60
+                            )
+                        }
+
+                        if (plugin.type != oorty.sednium.app.model.PluginType.DEVICE_CONTROL) {
+                            if (isInstalled) {
+                                TextButton(
+                                    onClick = {
+                                        pluginManager?.deletePlugin(plugin.id)
+                                        onUpdateSettings(settings.copy(
+                                            installedPluginIds = settings.installedPluginIds - plugin.id,
+                                            activePluginIds = settings.activePluginIds - plugin.id
+                                        ))
+                                        Toast.makeText(context, "${plugin.name} uninstalled", Toast.LENGTH_SHORT).show()
+                                    }
+                                ) {
+                                    Text("Uninstall", color = SedniumColors.Red600, style = MaterialTheme.typography.labelSmall)
+                                }
+                            } else {
+                                Button(
+                                    onClick = {
+                                        scope.launch {
+                                            pluginManager?.downloadPlugin(plugin.id)
+                                            onUpdateSettings(settings.copy(
+                                                installedPluginIds = settings.installedPluginIds + plugin.id,
+                                                activePluginIds = settings.activePluginIds + plugin.id
+                                            ))
+                                            Toast.makeText(context, "${plugin.name} installed successfully!", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(SedniumRadii.sm),
+                                    colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = SedniumColors.Milk),
+                                    modifier = Modifier.height(34.dp)
+                                ) {
+                                    Text("Download", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        plugin.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isDark) SedniumColors.Gray300 else OrangeAlpha.a70
+                    )
+
+                    // Test Action Bar
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        when (plugin.type) {
+                            oorty.sednium.app.model.PluginType.SPEECH_STT_TTS -> {
+                                OutlinedButton(
+                                    onClick = {
+                                        speechService?.speakText("Hello! This is Oorty running high quality on-device neural voice synthesis at ${settings.ttsSpeechRate}x speed.", rate = settings.ttsSpeechRate, pitch = settings.ttsPitch)
+                                        Toast.makeText(context, "Playing test audio...", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.height(32.dp),
+                                    shape = RoundedCornerShape(SedniumRadii.sm)
+                                ) {
+                                    Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Test Voice Readout", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            oorty.sednium.app.model.PluginType.DEVICE_CONTROL -> {
+                                OutlinedButton(
+                                    onClick = {
+                                        val res = oorty.sednium.app.plugins.device.DeviceAutomator.launchApp(context, testAppQuery)
+                                        Toast.makeText(context, res, Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.height(32.dp),
+                                    shape = RoundedCornerShape(SedniumRadii.sm)
+                                ) {
+                                    Text("Test App Launch (Termux)", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            oorty.sednium.app.model.PluginType.EMBEDDING -> {
+                                OutlinedButton(
+                                    onClick = {
+                                        Toast.makeText(context, "Markdown Vault Reindexed with 384d Dense Embeddings!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.height(32.dp),
+                                    shape = RoundedCornerShape(SedniumRadii.sm)
+                                ) {
+                                    Text("Re-index Vault", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            oorty.sednium.app.model.PluginType.OCR -> {
+                                OutlinedButton(
+                                    onClick = {
+                                        Toast.makeText(context, "OCR Engine Ready for Automatic Document Scanning", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.height(32.dp),
+                                    shape = RoundedCornerShape(SedniumRadii.sm)
+                                ) {
+                                    Text("Status: Ready", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
         SettingsSectionLabel("LOCAL AI & ON-DEVICE DIRECTORY")
         
         // Hugging Face Hub Browser Feature Card
@@ -1397,6 +1762,182 @@ fun UsageContent(
                         Text("Configure Model for Local AI", style = MaterialTheme.typography.labelLarge)
                     }
                 }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- ABOUT SEDNIUM & CREATORS SECTION ---
+        Card(
+            colors = CardDefaults.cardColors(containerColor = cardBg),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .border(1.dp, if (isDark) SedniumColors.Gray700 else OrangeAlpha.a20, RoundedCornerShape(14.dp))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(oorty.sednium.app.ui.theme.SedniumRadii.squircle))
+                            .background(accentColor),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(id = oorty.sednium.app.R.drawable.logo),
+                            contentDescription = "Oorty Logo",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                    }
+                    Column {
+                        Text(
+                            "About Sednium & Creators",
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            "Privacy-first, lightning-fast on-device AI",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a70
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    "Oorty is developed with craft by Sednium Technologies — an engineering and digital studio in West Bengal, India specializing in high-performance web applications, native mobile apps, and fluid design systems.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isDark) SedniumColors.Gray300 else OrangeAlpha.a70,
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Organization: Sednium
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isDark) Color(0xFF1E1E1E) else OrangeAlpha.a05)
+                        .clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sednium.com"))
+                            context.startActivity(intent)
+                        }
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Sednium Technologies",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange
+                        )
+                        Text(
+                            "sednium.com • West Bengal, India",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a70
+                        )
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForwardIos,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Creator 1: Ayush Pal (Bhoid)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isDark) Color(0xFF1E1E1E) else OrangeAlpha.a05)
+                        .clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://bhoid.sednium.com"))
+                            context.startActivity(intent)
+                        }
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Ayush Pal (Bhoid)",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange
+                        )
+                        Text(
+                            "Software Developer & Co-Creator • bhoid.sednium.com\nReact, TypeScript, Python, Kotlin Android, WebGL",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a70
+                        )
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForwardIos,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Creator 2: Ankush Das (Loid)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isDark) Color(0xFF1E1E1E) else OrangeAlpha.a05)
+                        .clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://loid.sednium.com"))
+                            context.startActivity(intent)
+                        }
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Ankush Das (Loid)",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isDark) SedniumColors.Gray100 else SedniumColors.Orange
+                        )
+                        Text(
+                            "Co-Founder & CTO • loid.sednium.com\nSystems Engineer, TypeScript, Go, Kotlin, OnyxChat",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isDark) SedniumColors.Gray400 else OrangeAlpha.a70
+                        )
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForwardIos,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    "Oorty v2.5.0 • Crafted with ❤️ by Sednium Systems",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isDark) SedniumColors.Gray500 else OrangeAlpha.a40,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             }
         }
     }

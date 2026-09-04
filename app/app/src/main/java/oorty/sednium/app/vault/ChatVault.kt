@@ -130,68 +130,87 @@ class ChatVault(private val context: Context) {
 
     suspend fun loadAllChats(): List<ChatVaultEntry> = withContext(Dispatchers.IO) {
         val entries = mutableListOf<ChatVaultEntry>()
-        val dir = getVaultDirectory()
-        if (!dir.exists() || !dir.isDirectory) return@withContext entries
+        val baseDir = getVaultDirectory()
+        val dirsToScan = listOfNotNull(
+            baseDir,
+            baseDir.parentFile,
+            File(context.filesDir, "Oorty")
+        ).distinct().filter { it.exists() && it.isDirectory }
 
-        val files = dir.listFiles { f -> f.extension.equals("md", ignoreCase = true) } ?: emptyArray()
+        val scannedPaths = mutableSetOf<String>()
 
-        for (file in files) {
-            try {
-                val text = file.readText()
-                val entry = parseMarkdownVaultFile(file.absolutePath, text)
-                if (entry != null) {
-                    entries.add(entry)
+        for (dir in dirsToScan) {
+            val files = dir.walkTopDown().maxDepth(3).filter { f -> f.isFile && f.extension.equals("md", ignoreCase = true) }
+            for (file in files) {
+                if (scannedPaths.add(file.absolutePath)) {
+                    try {
+                        val text = file.readText()
+                        val entry = parseMarkdownVaultFile(file.absolutePath, text)
+                        if (entry != null) {
+                            entries.add(entry)
+                        }
+                    } catch (e: Exception) {}
                 }
-            } catch (e: Exception) {}
+            }
         }
         entries.sortedByDescending { it.updated }
     }
 
     private fun parseMarkdownVaultFile(filePath: String, content: String): ChatVaultEntry? {
-        if (!content.startsWith("---")) return null
-        val frontmatterEnd = content.indexOf("---", 3)
-        if (frontmatterEnd == -1) return null
+        val file = File(filePath)
+        if (content.isBlank()) return null
 
-        val frontmatter = content.substring(3, frontmatterEnd)
-        val body = content.substring(frontmatterEnd + 3).trim()
-
-        var id = ""
-        var title = "Untitled"
-        var created = System.currentTimeMillis()
-        var updated = System.currentTimeMillis()
+        var id = file.nameWithoutExtension
+        var title = file.nameWithoutExtension.replace("-", " ").replace("_", " ").capitalize(Locale.getDefault())
+        var created = file.lastModified()
+        var updated = file.lastModified()
         var model = "default"
         var provider = "LOCAL"
-        var totalTokens = 0
+        var totalTokens = (content.length / 4).coerceAtLeast(1)
         var tags = listOf<String>()
         var messageCount = 0
         var hasAttachments = false
+        var body = content
 
-        frontmatter.lines().forEach { line ->
-            val parts = line.split(":", limit = 2)
-            if (parts.size == 2) {
-                val key = parts[0].trim()
-                val value = parts[1].trim().removeSurrounding("\"")
-                when (key) {
-                    "id" -> id = value
-                    "title" -> title = value
-                    "model" -> model = value
-                    "provider" -> provider = value
-                    "total_tokens_est" -> totalTokens = value.toIntOrNull() ?: 0
-                    "message_count" -> messageCount = value.toIntOrNull() ?: 0
-                    "has_attachments" -> hasAttachments = value.toBoolean()
-                    "tags" -> {
-                        tags = value.removePrefix("[").removeSuffix("]")
-                            .split(",")
-                            .map { it.trim().removeSurrounding("\"") }
-                            .filter { it.isNotBlank() }
+        if (content.startsWith("---")) {
+            val frontmatterEnd = content.indexOf("---", 3)
+            if (frontmatterEnd != -1) {
+                val frontmatter = content.substring(3, frontmatterEnd)
+                body = content.substring(frontmatterEnd + 3).trim()
+
+                frontmatter.lines().forEach { line ->
+                    val parts = line.split(":", limit = 2)
+                    if (parts.size == 2) {
+                        val key = parts[0].trim()
+                        val value = parts[1].trim().removeSurrounding("\"")
+                        when (key) {
+                            "id" -> id = value
+                            "title" -> title = value
+                            "model" -> model = value
+                            "provider" -> provider = value
+                            "total_tokens_est" -> totalTokens = value.toIntOrNull() ?: totalTokens
+                            "message_count" -> messageCount = value.toIntOrNull() ?: 0
+                            "has_attachments" -> hasAttachments = value.toBoolean()
+                            "tags" -> {
+                                tags = value.removePrefix("[").removeSuffix("]")
+                                    .split(",")
+                                    .map { it.trim().removeSurrounding("\"") }
+                                    .filter { it.isNotBlank() }
+                            }
+                        }
                     }
                 }
             }
+        } else {
+            // Find first markdown title "# Title"
+            val headingLine = content.lines().firstOrNull { it.startsWith("# ") }
+            if (headingLine != null) {
+                title = headingLine.removePrefix("# ").trim()
+            }
+            tags = LiteRtTitleGen.extractKeywords(content, limit = 5)
         }
 
-        if (id.isBlank()) id = File(filePath).nameWithoutExtension
-
-        val preview = body.lines().filter { !it.startsWith("#") && it.isNotBlank() }.joinToString(" ").take(220)
+        val preview = body.lines().filter { !it.startsWith("#") && it.isNotBlank() }.joinToString(" ").take(300)
         val embedding = EmbeddingEngine.embed("$title ${tags.joinToString(" ")} $preview")
 
         return ChatVaultEntry(

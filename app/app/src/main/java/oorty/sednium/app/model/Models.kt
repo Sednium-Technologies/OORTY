@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 @Serializable enum class ChatMode { QUICK, THINKING, CODING }
 
 @Serializable enum class ModelProvider {
-    NONE, GOOGLE, OPENAI, ANTHROPIC, XAI, GROQ, OPENROUTER, NVIDIA, LOCAL, CUSTOM, LOCAL_GGUF, ROSETTE
+    NONE, GOOGLE, OPENAI, ANTHROPIC, XAI, GROQ, OPENROUTER, NVIDIA, LOCAL, CUSTOM, LOCAL_GGUF, LOCAL_LITERT, ROSETTE
 }
 
 @Serializable enum class AppTheme { LIGHT, DARK }
@@ -39,6 +39,29 @@ import kotlinx.serialization.Serializable
     val url: String
 )
 
+@Serializable
+enum class GenerativeMediaType {
+    IMAGE, AUDIO, VIDEO
+}
+
+@Serializable
+enum class GenerativeMediaState {
+    QUEUED, GENERATING, COMPLETE, FAILED
+}
+
+@Serializable
+data class GenerativeMediaResult(
+    val type: GenerativeMediaType,
+    val state: GenerativeMediaState = GenerativeMediaState.COMPLETE,
+    val mediaUrl: String? = null,
+    val prompt: String = "",
+    val errorMessage: String? = null,
+    val progress: Float = 1f,
+    val durationSeconds: Float? = null,
+    val width: Int? = null,
+    val height: Int? = null
+)
+
 @Serializable data class ChatMessage(
     val id: String,
     val role: Role,
@@ -50,14 +73,9 @@ import kotlinx.serialization.Serializable
     val isThinking: Boolean = false,
     val toolCalls: List<ToolCallState> = emptyList(),
     val citations: List<Citation> = emptyList(),
+    val mediaResult: GenerativeMediaResult? = null,
+    val parentMessageId: String? = null,
     // Performance Insights — populated once a model turn finishes streaming.
-    // latencyMs = time from request sent to first token received (TTFT).
-    // tokensPerSecond is approximate: providers don't return exact token
-    // counts on a per-chunk basis over these streaming APIs, so it's
-    // estimated from response character count (~4 chars/token, a common
-    // rough heuristic for English text) divided by decode time. Treat it as
-    // a relative "which provider/model felt faster" signal, not a precise
-    // figure.
     val latencyMs: Long? = null,
     val tokensPerSecond: Float? = null,
     val thoughtDurationMs: Long? = null
@@ -70,10 +88,9 @@ import kotlinx.serialization.Serializable
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val isPinned: Boolean = false,
-    // Per-session generation overrides. Null means "inherit the current
-    // global AppSettings value" — these only kick in once a user explicitly
-    // sets them via the session config dialog (gear icon in the chat
-    // TopBar), and only affect this one chat.
+    val parentSessionId: String? = null,
+    val forkedFromMessageId: String? = null,
+    // Per-session generation overrides.
     val temperatureOverride: Float? = null,
     val topPOverride: Float? = null,
     val topKOverride: Int? = null,
@@ -106,6 +123,109 @@ enum class McpConnectionStatus {
     val systemInstruction: String
 )
 
+@Serializable enum class PluginType {
+    EMBEDDING, OCR, SPEECH_STT_TTS, DEVICE_CONTROL, CODE_ASSISTANT
+}
+
+@Serializable enum class PluginStatus {
+    NOT_DOWNLOADED, DOWNLOADING, INSTALLED, ACTIVE, ERROR
+}
+
+@Serializable data class LocalPluginInfo(
+    val id: String,
+    val name: String,
+    val type: PluginType,
+    val huggingFaceRepo: String,
+    val sizeMb: Int,
+    val description: String,
+    val capabilities: List<String>,
+    val fileName: String,
+    val downloadUrl: String = "",
+    val isRecommended: Boolean = true,
+    val status: PluginStatus = PluginStatus.NOT_DOWNLOADED,
+    val downloadProgress: Float = 0f
+)
+
+val DEFAULT_AVAILABLE_PLUGINS = listOf(
+    LocalPluginInfo(
+        id = "plugin_ocr",
+        name = "Micro OCR Scanner",
+        type = PluginType.OCR,
+        huggingFaceRepo = "stepfun-ai/GOT-OCR2_0-Mobile",
+        sizeMb = 14,
+        description = "High-speed on-device document scanner & image-to-text extractor. Silently extracts text from screenshots, receipts, notes & documents.",
+        capabilities = listOf("Screenshot to Text", "Silent Background OCR", "Multi-column Extraction"),
+        fileName = "got_ocr_micro.tflite",
+        downloadUrl = "https://huggingface.co/stepfun-ai/GOT-OCR2_0/resolve/main/ocr_quant.tflite",
+        isRecommended = true
+    ),
+    LocalPluginInfo(
+        id = "plugin_speech",
+        name = "Speech Studio (STT & TTS)",
+        type = PluginType.SPEECH_STT_TTS,
+        huggingFaceRepo = "openai/whisper-tiny-tflite",
+        sizeMb = 24,
+        description = "Neural speech recognizer & real-time text-to-speech synthesizer. Enables hands-free continuous voice mode and in-chat audio playback.",
+        capabilities = listOf("Voice Dictation (STT)", "Hands-Free Voice Mode", "Audio Read Aloud (TTS)"),
+        fileName = "whisper_tiny_mobile.tflite",
+        downloadUrl = "https://huggingface.co/openai/whisper-tiny/resolve/main/whisper_quant.tflite",
+        isRecommended = true
+    ),
+    LocalPluginInfo(
+        id = "plugin_embeddings",
+        name = "EmbeddingGemma 300M",
+        type = PluginType.EMBEDDING,
+        huggingFaceRepo = "google/embedding-gemma-300m-tflite",
+        sizeMb = 18,
+        description = "State-of-the-art 256/384d Matryoshka vector embedder for on-device Markdown Vault RAG and deep semantic similarity search.",
+        capabilities = listOf("Obsidian Vault RAG", "Deep Semantic Matching", "Multi-lingual Recall"),
+        fileName = "embedding_gemma_quant.tflite",
+        downloadUrl = "https://huggingface.co/google/embeddinggemma-256d-tflite/resolve/main/model.tflite",
+        isRecommended = true
+    ),
+    LocalPluginInfo(
+        id = "plugin_device_control",
+        name = "Device Controller & App Linker",
+        type = PluginType.DEVICE_CONTROL,
+        huggingFaceRepo = "sednium/oorty-device-automator",
+        sizeMb = 4,
+        description = "Autonomous bridge to Android apps (Obsidian, Termux, Chrome, Maps, YouTube), battery inspector, flashlight toggle, and clipboard automations.",
+        capabilities = listOf("Open & Link Apps", "Flashlight & Battery Info", "Android System Intents"),
+        fileName = "device_automator.json",
+        downloadUrl = "",
+        isRecommended = true
+    ),
+    LocalPluginInfo(
+        id = "plugin_code_assistant",
+        name = "Qwen 3 0.6B Ultralight",
+        type = PluginType.CODE_ASSISTANT,
+        huggingFaceRepo = "Qwen/Qwen3-0.6B-Instruct-GGUF",
+        sizeMb = 380,
+        description = "Ultra-compact local reasoning and assistant model running fully offline via llama.cpp. Optimized for entry-level and low-spec hardware (2GB+ RAM).",
+        capabilities = listOf("Runs on Low-End Hardware", "Offline Local Generation", "Zero-Cloud Dependency"),
+        fileName = "qwen3-0.6b-instruct-q4_k_m.gguf",
+        downloadUrl = "https://huggingface.co/Qwen/Qwen3-0.6B-Instruct-GGUF/resolve/main/qwen3-0.6b-instruct-q4_k_m.gguf",
+        isRecommended = true
+    ),
+    LocalPluginInfo(
+        id = "plugin_kokoro_tts",
+        name = "Kokoro-82M Neural Voice",
+        type = PluginType.SPEECH_STT_TTS,
+        huggingFaceRepo = "hexgrad/Kokoro-82M-ONNX",
+        sizeMb = 82,
+        description = "State-of-the-art 82M open-weight neural text-to-speech engine. Synthesizes ultra-realistic expressive human speech with natural breathing & intonation on-device.",
+        capabilities = listOf("Ultra-Realistic Prosody", "Expressive Human Cadence", "100% Offline Audio Synthesis"),
+        fileName = "kokoro_v0_19_fp16.onnx",
+        downloadUrl = "https://huggingface.co/hexgrad/Kokoro-82M/resolve/main/kokoro_fp16.onnx",
+        isRecommended = true
+    )
+)
+
+@Serializable
+enum class VoicePersona {
+    WARM_CONVERSATIONAL, DEEP_CONFIDENT, ENERGETIC_DIRECT, SYSTEM_DEFAULT
+}
+
 @Serializable data class AppSettings(
     val theme: AppTheme = AppTheme.LIGHT,
     val provider: ModelProvider = ModelProvider.NONE,
@@ -118,10 +238,21 @@ enum class McpConnectionStatus {
     val savedPresets: List<SavedModelPreset> = emptyList(),
     val activePresetId: String? = null,
 
+    val hasCompletedPluginOnboarding: Boolean = false,
+    val installedPluginIds: Set<String> = emptySet(),
+    val activePluginIds: Set<String> = setOf("plugin_ocr", "plugin_speech", "plugin_embeddings", "plugin_device_control"),
+    val enableSilentOcr: Boolean = true,
+    val enableSpeechTts: Boolean = true,
+    val enableContinuousVoice: Boolean = true,
+    val voicePersona: VoicePersona = VoicePersona.WARM_CONVERSATIONAL,
+    val ttsSpeechRate: Float = 1.0f,
+    val ttsPitch: Float = 1.0f,
+    val geminiLiveVoice: String = "Aoede",
+
     val model: String = "",
-    val quickSystemInstruction: String = "You are Oorty, a helpful and concise AI assistant.",
-    val thinkingSystemInstruction: String = "You are Oorty, an elite AI. Think step-by-step and show your reasoning.",
-    val codingSystemInstruction: String = "You are Oorty, a world-class software architect. Write exceptionally clean, robust, secure, and highly optimized code.",
+    val quickSystemInstruction: String = "You are Oorty, an intelligent AI workspace assistant on Android developed by Sednium (founded by Ayush Pal / Bhoid and Ankush Das / Loid in West Bengal, India). You know about your creators: Sednium (sednium.com), Bhoid (Ayush Pal, bhoid.sednium.com, @CoderBhoid - Full-stack & Android developer), and Loid (Ankush Das, loid.sednium.com, @AnkushDas4 - CTO & Systems Architect). Provide direct, helpful, and concise answers in clean Markdown.",
+    val thinkingSystemInstruction: String = "You are Oorty, a deeply analytical reasoning assistant created by Sednium (Ayush Pal / Bhoid and Ankush Das / Loid). Enclose your chain-of-thought analysis strictly inside <thought>...</thought> tags. Output only your clear, finalized, well-structured answer outside of the thought tags.",
+    val codingSystemInstruction: String = "You are Oorty, an elite principal software engineer created by Sednium (Ayush Pal / Bhoid and Ankush Das / Loid). Provide robust, clean, idiomatic, and secure code with precise syntax highlighting and minimal conversational filler.",
     val temperature: Float = 0.7f,
     val topP: Float = 0.9f,
     val topK: Int = 40,
@@ -145,6 +276,8 @@ enum class McpConnectionStatus {
     val customApiKey: String = "",
     val ggufModelUri: String = "",
     val ggufModelPath: String = "",
+    val litertModelUri: String = "",
+    val litertModelPath: String = "",
     val useSerifFont: Boolean = true
 ) {
     val currentSystemInstruction: String
@@ -215,10 +348,13 @@ val PROVIDER_CONFIG: Map<ModelProvider, ProviderInfo> = mapOf(
         "https://generativelanguage.googleapis.com", 
         "https://aistudio.google.com/app/apikey", 
         listOf(
+            ModelOption("gemini-2.0-flash-exp", "Gemini 2.0 Flash Live (Audio/Voice)", ModelIconType.LIGHTNING),
+            ModelOption("gemini-2.0-flash-realtime", "Gemini 2.0 Realtime Live", ModelIconType.LIGHTNING),
+            ModelOption("gemini-3.1-flash-live", "Gemini 3.1 Flash Live", ModelIconType.LIGHTNING),
             ModelOption("gemini-3.5-flash", "Gemini 3.5 Flash", ModelIconType.LIGHTNING),
             ModelOption("gemini-3.1-pro-preview", "Gemini 3.1 Pro Preview", ModelIconType.AGENT),
-            ModelOption("gemini-3.1-flash-live", "Gemini 3.1 Flash Live", ModelIconType.LIGHTNING),
             ModelOption("gemini-2.5-flash", "Gemini 2.5 Flash", ModelIconType.LIGHTNING),
+            ModelOption("gemini-transcribe-3", "Gemini Transcribe 3", ModelIconType.VIDEO),
             ModelOption("gemma-4-31b", "Gemma 4 31B", ModelIconType.CODE)
         )
     ),
@@ -300,10 +436,22 @@ val PROVIDER_CONFIG: Map<ModelProvider, ProviderInfo> = mapOf(
         "",
         "",
         listOf(
+            ModelOption("Qwen/Qwen3-0.6B-Instruct-GGUF", "Qwen 3 0.6B (0.4 GB) — Low Hardware", ModelIconType.LIGHTNING),
             ModelOption("Qwen/Qwen2.5-0.5B-Instruct-GGUF", "Qwen 2.5 0.5B (0.4 GB)", ModelIconType.LIGHTNING),
             ModelOption("meta-llama/Llama-3.2-1B-Instruct-GGUF", "Llama 3.2 1B (0.7 GB)", ModelIconType.AGENT),
             ModelOption("google/gemma-2-2b-it-GGUF", "Gemma 2 2B (1.5 GB)", ModelIconType.AGENT),
             ModelOption("microsoft/Phi-3-mini-4k-instruct-gguf", "Phi 3 Mini 3.8B (2.2 GB)", ModelIconType.CODE)
+        )
+    ),
+    ModelProvider.LOCAL_LITERT to ProviderInfo(
+        "Google LiteRT",
+        "",
+        "",
+        listOf(
+            ModelOption("google/gemma-2-2b-it-litert", "Gemma 2 2B (LiteRT)", ModelIconType.LIGHTNING),
+            ModelOption("google/gemma-2b-it-tflite", "Gemma 2B IT (.tflite)", ModelIconType.AGENT),
+            ModelOption("google/mobilebert-tflite", "MobileBERT (.tflite)", ModelIconType.LIGHTNING),
+            ModelOption("stepfun-ai/GOT-OCR2_0-tflite", "GOT-OCR 2.0 (.tflite)", ModelIconType.IMAGE)
         )
     )
 )

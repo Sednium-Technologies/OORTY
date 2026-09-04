@@ -62,6 +62,7 @@ class ToolCallOrchestrator(
     private val llm: ToolCallingChatClient,
     private val policy: ToolCallPolicy = ToolCallPolicy(),
     private val vaultIndexer: oorty.sednium.app.vault.VaultIndexer? = null,
+    private val context: android.content.Context? = null,
     private val onEvent: (ToolCallEvent) -> Unit = {},
     private val confirmDestructive: suspend (LlmToolCall, Tool) -> Boolean = { _, _ -> true }
 ) {
@@ -74,11 +75,14 @@ class ToolCallOrchestrator(
             onEvent(ToolCallEvent.ModelTurn(iteration + 1))
 
             val mcpTools = mcpServers.availableTools
-            val builtInTools = if (vaultIndexer != null) {
+            val vaultTools = if (vaultIndexer != null) {
                 listOf(QualifiedTool("builtin", "recall_from_vault", VaultRecallTool.getToolDefinition()))
             } else emptyList()
+            val deviceTools = if (context != null) {
+                DeviceTools.getBuiltInTools()
+            } else emptyList()
 
-            val qualifiedTools = mcpTools + builtInTools
+            val qualifiedTools = mcpTools + vaultTools + deviceTools
             val toolsByName: Map<String, Tool> = qualifiedTools.associate { it.qualifiedName to it.tool }
             val llmTools = qualifiedTools.map { it.toLlmTool() }
 
@@ -124,6 +128,14 @@ class ToolCallOrchestrator(
                 onEvent(ToolCallEvent.Succeeded(call, text.take(120)))
                 return LlmChatTurn.ToolResult(call.callId, call.qualifiedName, text, isError = callResult.isError)
             }
+        }
+
+        val normName = call.qualifiedName.substringAfter("::").substringAfter("__")
+        if (context != null && (normName == "launch_app" || normName == "get_battery_status" || normName == "toggle_flashlight")) {
+            val callResult = DeviceTools.execute(context, call.qualifiedName, call.arguments)
+            val text = callResult.content.joinToString("\n") { it.toPlainText() }
+            onEvent(ToolCallEvent.Succeeded(call, text.take(120)))
+            return LlmChatTurn.ToolResult(call.callId, call.qualifiedName, text, isError = callResult.isError)
         }
 
         if (tool == null) {

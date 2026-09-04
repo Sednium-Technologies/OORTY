@@ -1,6 +1,7 @@
 package oorty.sednium.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,8 +19,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,13 +49,11 @@ fun SedniumTopBar(
     localServerStatus: LocalServerStatus? = null,
     showClear: Boolean,
     showExport: Boolean = true,
-    isFocusMode: Boolean = false,
     onMenuClick: () -> Unit,
     onExportClick: () -> Unit = {},
     onClearClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onSessionConfigClick: () -> Unit = {},
-    onFocusModeToggle: () -> Unit = {}
+    onSessionConfigClick: () -> Unit = {}
 ) {
     val isDark = LocalSedniumIsDark.current
     val accentColor = if (isDark) SedniumColors.DarkOrange else SedniumColors.Orange
@@ -76,12 +73,14 @@ fun SedniumTopBar(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (!isFocusMode) {
-                IconButton(onClick = onMenuClick) {
-                    Icon(Icons.Filled.Menu, contentDescription = "Chats", tint = accentColor)
-                }
+            IconButton(onClick = onMenuClick) {
+                Icon(Icons.Filled.Menu, contentDescription = "Chats", tint = accentColor)
             }
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onSessionConfigClick)
+            ) {
                 Text(
                     text = title.ifBlank { "Oorty AI" },
                     style = MaterialTheme.typography.titleMedium,
@@ -116,7 +115,7 @@ fun SedniumTopBar(
             }
         }
 
-        if (showExport && !isFocusMode) {
+        if (showExport) {
             IconButton(onClick = onExportClick) {
                 Icon(Icons.Filled.Share, contentDescription = "Export chat", tint = accentColor)
             }
@@ -147,18 +146,16 @@ fun SedniumTopBar(
             )
         }
 
-        if (showClear && !isFocusMode) {
+        if (showClear) {
             IconButton(onClick = { showClearConfirmDialog.value = true }) {
                 Icon(Icons.Filled.Delete, contentDescription = "Clear chat", tint = accentColor)
             }
         }
-        IconButton(onClick = onFocusModeToggle) {
-            Icon(if (isFocusMode) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, contentDescription = "Focus Mode", tint = accentColor)
-        }
-        if (!isFocusMode) {
-            IconButton(onClick = onSettingsClick) {
-                Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = accentColor)
-            }
+        
+
+
+        IconButton(onClick = onSettingsClick) {
+            Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = accentColor)
         }
     }
 }
